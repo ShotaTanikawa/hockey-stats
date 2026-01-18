@@ -1,58 +1,15 @@
-"use client";
-
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import React, { useState } from "react";
 import {
     Card,
-    CardAction,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
-export default function LoginPage() {
-    const router = useRouter();
-    // ブラウザ側で利用するSupabaseクライアント
-    const supabase = createClient();
-
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    // フォーム送信を一箇所で扱う（Enter送信も対応）
-    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        // エラーをリセットして送信中状態にする
-        setError(null);
-        setLoading(true);
-
-        // Supabaseのメール/パスワード認証
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        setLoading(false);
-
-        if (error) {
-            // 認証失敗時はエラー表示
-            setError(error.message);
-            return;
-        }
-
-        // 認証成功後は保護ページへ遷移
-        router.push("/dashboard");
-        router.refresh();
-    }
-
+export default function SignupPage() {
     return (
         <div className="min-h-svh w-full bg-white px-4 py-10">
             <div className="mx-auto w-full max-w-[420px] pt-10">
@@ -68,14 +25,14 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-1">
-                            <div className="text-base font-semibold">ログイン</div>
+                            <div className="text-base font-semibold">サインアップ</div>
                             <div className="text-sm text-gray-500">
-                                アカウント情報を入力してください
+                                新しいアカウントを作成
                             </div>
                         </div>
                     </CardHeader>
 
-                    <form onSubmit={onSubmit}>
+                    <form>
                         <CardContent className="space-y-5 p-6">
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-sm">
@@ -85,9 +42,6 @@ export default function LoginPage() {
                                     id="email"
                                     type="email"
                                     placeholder="email@example.com"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
                                     className="h-12 rounded-xl bg-gray-50"
                                 />
                             </div>
@@ -99,35 +53,40 @@ export default function LoginPage() {
                                 <Input
                                     id="password"
                                     type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
                                     className="h-12 rounded-xl bg-gray-50"
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <Label htmlFor="team-code" className="text-sm">
+                                    Team Code
+                                </Label>
+                                <Input
+                                    id="team-code"
+                                    type="text"
+                                    placeholder="LEAFS2025"
+                                    className="h-12 rounded-xl bg-gray-50"
+                                />
+                                <p className="text-xs text-gray-500">
+                                    （チームから提供されたコード）
+                                </p>
+                            </div>
+
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
+                                ※ 新規ユーザーは自動的に Viewer として登録されます
+                            </div>
+
                             <Button
                                 type="submit"
-                                disabled={loading}
                                 className="h-12 w-full rounded-xl bg-black text-white hover:bg-black/90"
                             >
-                                {loading ? "ログイン中..." : "ログイン"}
+                                アカウント作成
                             </Button>
-                            {error && (
-                                <p className="text-sm text-red-600">{error}</p>
-                            )}
-
-                            <button
-                                type="button"
-                                className="text-left text-sm text-gray-500 hover:text-gray-700"
-                            >
-                                パスワードをお忘れですか？
-                            </button>
                         </CardContent>
 
                         <CardFooter className="flex flex-col gap-4 border-t border-gray-200 p-6">
                             <div className="text-sm text-gray-500">
-                                アカウントをお持ちでないですか？
+                                既にアカウントをお持ちですか？
                             </div>
                             <Button
                                 type="button"
@@ -135,7 +94,7 @@ export default function LoginPage() {
                                 className="h-12 w-full rounded-xl border-gray-200 bg-white"
                                 asChild
                             >
-                                <Link href="/signup">サインアップ</Link>
+                                <Link href="/login">ログイン</Link>
                             </Button>
                         </CardFooter>
                     </form>
