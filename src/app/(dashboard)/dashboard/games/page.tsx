@@ -3,17 +3,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { GameRow } from "@/lib/types/stats";
 
 export const dynamic = "force-dynamic";
-
-type GameRow = {
-    id: string;
-    game_date: string;
-    opponent: string;
-    venue: string | null;
-    period_minutes: number;
-    has_overtime: boolean;
-};
 
 function formatGameDate(dateString: string) {
     const date = new Date(dateString);
@@ -146,7 +138,7 @@ export default async function DashboardGamesPage() {
                                         className="h-8 rounded-lg px-3"
                                         asChild
                                     >
-                                        <Link href={`/games/${game.id}`}>
+                                        <Link href={`/dashboard/games/${game.id}`}>
                                             詳細
                                         </Link>
                                     </Button>
@@ -155,7 +147,9 @@ export default async function DashboardGamesPage() {
                                         className="h-8 rounded-lg bg-black px-3 text-white hover:bg-black/90"
                                         asChild
                                     >
-                                        <Link href={`/games/${game.id}/live`}>
+                                        <Link
+                                            href={`/dashboard/games/${game.id}/live`}
+                                        >
                                             ライブ
                                         </Link>
                                     </Button>

@@ -3,29 +3,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type {
+    GoalieStatRow,
+    GoalieSummaryRow,
+    SkaterStatRow,
+    SkaterSummaryRow,
+} from "@/lib/types/stats";
 
 export const dynamic = "force-dynamic";
 
-type SkaterRow = {
-    id: string;
-    name: string;
-    number: number;
-    position: string;
-    goals: number;
-    assists: number;
-    shots: number;
-    blocks: number;
-    pim: number;
-};
-
-type GoalieRow = {
-    id: string;
-    name: string;
-    number: number;
-    shots_against: number;
-    saves: number;
-    goals_against: number;
-};
+function formatPercent(value: number) {
+    return `${(value * 100).toFixed(1)}%`;
+}
 
 export default async function DashboardStatsPlayersPage() {
     const supabase = await createClient();
@@ -50,6 +39,15 @@ export default async function DashboardStatsPlayersPage() {
     const teamName = team?.name ?? "Unknown Team";
     const seasonLabel = team?.season_label ?? "-";
 
+    // シーズン内の試合IDを先に取得しておく
+    const { data: games } = await supabase
+        .from("games")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("season", seasonLabel);
+
+    const gameIds = (games ?? []).map((game) => game.id);
+
     // MVPは選手マスタのみ取得し、スタッツは仮値で表示する
     const { data: skaters } = await supabase
         .from("players")
@@ -67,23 +65,90 @@ export default async function DashboardStatsPlayersPage() {
         .eq("is_active", true)
         .order("number", { ascending: true });
 
-    // TODO: player_stats を集計して実データに置き換える
-    const skaterRows = (skaters ?? []).map((player) => ({
-        ...player,
-        goals: 0,
-        assists: 0,
-        shots: 0,
-        blocks: 0,
-        pim: 0,
-    })) as SkaterRow[];
+    const { data: skaterStats } = gameIds.length
+        ? await supabase
+            .from("player_stats")
+            .select("player_id, game_id, goals, assists, shots, blocks, pim")
+            .in("game_id", gameIds)
+        : { data: [] as SkaterStatRow[] };
 
-    // TODO: goalie_stats を集計して実データに置き換える
-    const goalieRows = (goalies ?? []).map((player) => ({
-        ...player,
-        shots_against: 0,
-        saves: 0,
-        goals_against: 0,
-    })) as GoalieRow[];
+    const { data: goalieStats } = gameIds.length
+        ? await supabase
+            .from("goalie_stats")
+            .select("player_id, game_id, shots_against, saves, goals_against")
+            .in("game_id", gameIds)
+        : { data: [] as GoalieStatRow[] };
+
+    const skaterGameCounts = new Map<string, Set<string>>();
+    const skaterTotals = new Map<string, SkaterSummaryRow>();
+
+    (skaters ?? []).forEach((player) => {
+        skaterTotals.set(player.id, {
+            ...player,
+            gp: 0,
+            goals: 0,
+            assists: 0,
+            shots: 0,
+            blocks: 0,
+            pim: 0,
+        });
+    });
+
+    (skaterStats ?? []).forEach((stat) => {
+        const row = skaterTotals.get(stat.player_id);
+        if (!row) return;
+        row.goals += stat.goals;
+        row.assists += stat.assists;
+        row.shots += stat.shots;
+        row.blocks += stat.blocks;
+        row.pim += stat.pim;
+
+        const set = skaterGameCounts.get(stat.player_id) ?? new Set<string>();
+        set.add(stat.game_id);
+        skaterGameCounts.set(stat.player_id, set);
+    });
+
+    skaterGameCounts.forEach((set, playerId) => {
+        const row = skaterTotals.get(playerId);
+        if (row) {
+            row.gp = set.size;
+        }
+    });
+
+    const goalieGameCounts = new Map<string, Set<string>>();
+    const goalieTotals = new Map<string, GoalieSummaryRow>();
+
+    (goalies ?? []).forEach((player) => {
+        goalieTotals.set(player.id, {
+            ...player,
+            gp: 0,
+            shots_against: 0,
+            saves: 0,
+            goals_against: 0,
+        });
+    });
+
+    (goalieStats ?? []).forEach((stat) => {
+        const row = goalieTotals.get(stat.player_id);
+        if (!row) return;
+        row.shots_against += stat.shots_against;
+        row.saves += stat.saves;
+        row.goals_against += stat.goals_against;
+
+        const set = goalieGameCounts.get(stat.player_id) ?? new Set<string>();
+        set.add(stat.game_id);
+        goalieGameCounts.set(stat.player_id, set);
+    });
+
+    goalieGameCounts.forEach((set, playerId) => {
+        const row = goalieTotals.get(playerId);
+        if (row) {
+            row.gp = set.size;
+        }
+    });
+
+    const skaterRows = Array.from(skaterTotals.values());
+    const goalieRows = Array.from(goalieTotals.values());
 
     return (
         <main className="min-h-svh bg-white">
@@ -127,30 +192,42 @@ export default async function DashboardStatsPlayersPage() {
                             <div className="mb-4 text-sm font-semibold">
                                 Skaters
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr_1fr]">
+                            <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[160px_80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
                                 <div>Name</div>
+                                <div>POS</div>
+                                <div>GP</div>
                                 <div>G</div>
                                 <div>A</div>
-                                <div>PIM</div>
+                                <div>P</div>
                                 <div>SOG</div>
                                 <div>BLK</div>
-                                <div>PTS</div>
+                                <div>PIM</div>
+                                <div>SH%</div>
                             </div>
                             <div className="mt-3 space-y-3">
                                 {skaterRows.map((player) => (
                                     <div
                                         key={player.id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr_1fr]"
+                                        className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[160px_80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]"
                                     >
                                         <div className="font-semibold text-gray-700">
                                             #{player.number} {player.name}
                                         </div>
+                                        <div>{player.position}</div>
+                                        <div>{player.gp}</div>
                                         <div>{player.goals}</div>
                                         <div>{player.assists}</div>
-                                        <div>{player.pim}</div>
+                                        <div>{player.goals + player.assists}</div>
                                         <div>{player.shots}</div>
                                         <div>{player.blocks}</div>
-                                        <div>{player.goals + player.assists}</div>
+                                        <div>{player.pim}</div>
+                                        <div>
+                                            {player.shots === 0
+                                                ? "-"
+                                                : formatPercent(
+                                                    player.goals / player.shots
+                                                )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -162,8 +239,9 @@ export default async function DashboardStatsPlayersPage() {
                             <div className="mb-4 text-sm font-semibold">
                                 Goalies
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr_1fr]">
+                            <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[160px_1fr_1fr_1fr_1fr_1fr]">
                                 <div>Name</div>
+                                <div>GP</div>
                                 <div>SA</div>
                                 <div>Saves</div>
                                 <div>GA</div>
@@ -173,21 +251,22 @@ export default async function DashboardStatsPlayersPage() {
                                 {goalieRows.map((player) => (
                                     <div
                                         key={player.id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr]"
+                                        className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[160px_1fr_1fr_1fr_1fr_1fr]"
                                     >
                                         <div className="font-semibold text-gray-700">
                                             #{player.number} {player.name}
                                         </div>
+                                        <div>{player.gp}</div>
                                         <div>{player.shots_against}</div>
                                         <div>{player.saves}</div>
                                         <div>{player.goals_against}</div>
                                         <div>
                                             {player.shots_against === 0
                                                 ? "-"
-                                                : (
+                                                : formatPercent(
                                                     player.saves /
                                                     player.shots_against
-                                                ).toFixed(3)}
+                                                )}
                                         </div>
                                     </div>
                                 ))}

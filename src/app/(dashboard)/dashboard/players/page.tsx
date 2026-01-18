@@ -4,16 +4,9 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, UserPlus } from "lucide-react";
+import type { PlayerRow } from "@/lib/types/stats";
 
 export const dynamic = "force-dynamic";
-
-type PlayerRow = {
-    id: string;
-    name: string;
-    number: number;
-    position: "F" | "D" | "G";
-    is_active: boolean;
-};
 
 const positionStyle: Record<
     PlayerRow["position"],
