@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, UserPlus } from "lucide-react";
 import type { PlayerRow } from "@/lib/types/stats";
+import { getMemberWithTeam, getPlayersByTeam } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -43,23 +44,14 @@ export default async function DashboardPlayersPage() {
     }
 
     // ログインユーザーの所属チーム情報を取得
-    const { data: member } = await supabase
-        .from("team_members")
-        .select("teams (id, name, season_label)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const { data: member } = await getMemberWithTeam(supabase, user.id);
 
     const team = member?.teams?.[0];
     const teamName = team?.name ?? "Unknown Team";
     const seasonLabel = team?.season_label ?? "-";
 
     // アクティブな選手を背番号順で取得
-    const { data: players } = await supabase
-        .from("players")
-        .select("id, name, number, position, is_active")
-        .eq("is_active", true)
-        .order("number", { ascending: true });
+    const { data: players } = await getPlayersByTeam(supabase, team?.id ?? null);
 
     const playerRows = (players ?? []) as PlayerRow[];
 

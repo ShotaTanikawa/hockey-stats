@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, BarChart } from "lucide-react";
+import { getMemberWithTeam } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,7 @@ export default async function DashboardPage() {
     }
 
     // ログインユーザーの所属チームとロールを取得
-    const { data: member } = await supabase
-        .from("team_members")
-        .select("role, teams (id, name, season_label)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const { data: member } = await getMemberWithTeam(supabase, user.id);
 
     const team = member?.teams?.[0];
     const teamName = team?.name ?? "Unknown Team";

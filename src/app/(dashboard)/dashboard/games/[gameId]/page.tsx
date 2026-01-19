@@ -8,6 +8,11 @@ import type {
     GoalieStatWithPlayer,
     SkaterStatWithPlayer,
 } from "@/lib/types/stats";
+import {
+    getGameById,
+    getGoalieStatsWithPlayersByGameId,
+    getSkaterStatsWithPlayersByGameId,
+} from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -49,29 +54,21 @@ export default async function GameDetailPage({
         redirect("/login");
     }
 
-    const { data: game } = await supabase
-        .from("games")
-        .select("id, game_date, opponent, venue, period_minutes, has_overtime")
-        .eq("id", params.gameId)
-        .maybeSingle();
+    const { data: game } = await getGameById(supabase, params.gameId);
 
     if (!game) {
         redirect("/dashboard/games");
     }
 
-    const { data: skaterStats } = await supabase
-        .from("player_stats")
-        .select(
-            "player_id, goals, assists, shots, blocks, pim, players (name, number, position)"
-        )
-        .eq("game_id", game.id);
+    const { data: skaterStats } = await getSkaterStatsWithPlayersByGameId(
+        supabase,
+        game.id
+    );
 
-    const { data: goalieStats } = await supabase
-        .from("goalie_stats")
-        .select(
-            "player_id, shots_against, saves, goals_against, players (name, number)"
-        )
-        .eq("game_id", game.id);
+    const { data: goalieStats } = await getGoalieStatsWithPlayersByGameId(
+        supabase,
+        game.id
+    );
 
     const skaterRows = (skaterStats ?? []) as SkaterStatWithPlayer[];
     const goalieRows = (goalieStats ?? []) as GoalieStatWithPlayer[];

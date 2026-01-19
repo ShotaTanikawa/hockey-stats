@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { GameRow } from "@/lib/types/stats";
+import { getGamesByTeam, getMemberWithTeam } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -44,22 +45,14 @@ export default async function DashboardGamesPage() {
     }
 
     // ログインユーザーの所属チーム情報を取得
-    const { data: member } = await supabase
-        .from("team_members")
-        .select("role, teams (id, name, season_label)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const { data: member } = await getMemberWithTeam(supabase, user.id);
 
     const team = member?.teams?.[0];
     const teamName = team?.name ?? "Unknown Team";
     const seasonLabel = team?.season_label ?? "-";
 
     // 試合一覧を日付降順で取得
-    const { data: games } = await supabase
-        .from("games")
-        .select("id, game_date, opponent, venue, period_minutes, has_overtime")
-        .order("game_date", { ascending: false });
+    const { data: games } = await getGamesByTeam(supabase, team?.id);
 
     const gameRows = (games ?? []) as GameRow[];
 

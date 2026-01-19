@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type {
-    GoalieStatRow,
-    GoalieSummaryRow,
-    SkaterStatRow,
-    SkaterSummaryRow,
-} from "@/lib/types/stats";
+import type { GoalieSummaryRow, SkaterSummaryRow } from "@/lib/types/stats";
+import {
+    getGoalieStatsByGameIds,
+    getGoaliesByTeam,
+    getGamesBySeason,
+    getMemberWithTeam,
+    getSkaterStatsByGameIds,
+    getSkatersByTeam,
+} from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +30,7 @@ export default async function DashboardStatsPlayersPage() {
         redirect("/login");
     }
 
-    const { data: member } = await supabase
-        .from("team_members")
-        .select("teams (id, name, season_label)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const { data: member } = await getMemberWithTeam(supabase, user.id);
 
     const team = member?.teams?.[0];
     const teamId = team?.id ?? null;
@@ -40,44 +38,28 @@ export default async function DashboardStatsPlayersPage() {
     const seasonLabel = team?.season_label ?? "-";
 
     // シーズン内の試合IDを先に取得しておく
-    const { data: games } = await supabase
-        .from("games")
-        .select("id")
-        .eq("team_id", teamId)
-        .eq("season", seasonLabel);
+    const { data: games } = await getGamesBySeason(
+        supabase,
+        teamId,
+        seasonLabel
+    );
 
     const gameIds = (games ?? []).map((game) => game.id);
 
     // MVPは選手マスタのみ取得し、スタッツは仮値で表示する
-    const { data: skaters } = await supabase
-        .from("players")
-        .select("id, name, number, position")
-        .eq("team_id", teamId)
-        .neq("position", "G")
-        .eq("is_active", true)
-        .order("number", { ascending: true });
+    const { data: skaters } = await getSkatersByTeam(supabase, teamId);
 
-    const { data: goalies } = await supabase
-        .from("players")
-        .select("id, name, number")
-        .eq("team_id", teamId)
-        .eq("position", "G")
-        .eq("is_active", true)
-        .order("number", { ascending: true });
+    const { data: goalies } = await getGoaliesByTeam(supabase, teamId);
 
-    const { data: skaterStats } = gameIds.length
-        ? await supabase
-            .from("player_stats")
-            .select("player_id, game_id, goals, assists, shots, blocks, pim")
-            .in("game_id", gameIds)
-        : { data: [] as SkaterStatRow[] };
+    const { data: skaterStats } = await getSkaterStatsByGameIds(
+        supabase,
+        gameIds
+    );
 
-    const { data: goalieStats } = gameIds.length
-        ? await supabase
-            .from("goalie_stats")
-            .select("player_id, game_id, shots_against, saves, goals_against")
-            .in("game_id", gameIds)
-        : { data: [] as GoalieStatRow[] };
+    const { data: goalieStats } = await getGoalieStatsByGameIds(
+        supabase,
+        gameIds
+    );
 
     const skaterGameCounts = new Map<string, Set<string>>();
     const skaterTotals = new Map<string, SkaterSummaryRow>();
@@ -103,9 +85,12 @@ export default async function DashboardStatsPlayersPage() {
         row.blocks += stat.blocks;
         row.pim += stat.pim;
 
-        const set = skaterGameCounts.get(stat.player_id) ?? new Set<string>();
-        set.add(stat.game_id);
-        skaterGameCounts.set(stat.player_id, set);
+        if (stat.game_id) {
+            const set =
+                skaterGameCounts.get(stat.player_id) ?? new Set<string>();
+            set.add(stat.game_id);
+            skaterGameCounts.set(stat.player_id, set);
+        }
     });
 
     skaterGameCounts.forEach((set, playerId) => {
@@ -135,9 +120,12 @@ export default async function DashboardStatsPlayersPage() {
         row.saves += stat.saves;
         row.goals_against += stat.goals_against;
 
-        const set = goalieGameCounts.get(stat.player_id) ?? new Set<string>();
-        set.add(stat.game_id);
-        goalieGameCounts.set(stat.player_id, set);
+        if (stat.game_id) {
+            const set =
+                goalieGameCounts.get(stat.player_id) ?? new Set<string>();
+            set.add(stat.game_id);
+            goalieGameCounts.set(stat.player_id, set);
+        }
     });
 
     goalieGameCounts.forEach((set, playerId) => {

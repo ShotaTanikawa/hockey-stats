@@ -1,12 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import LiveClient from "./LiveClient";
-import type {
-    Goalie,
-    GoalieStatRow,
-    Skater,
-    SkaterStatRow,
-} from "@/lib/types/stats";
+import type { Goalie, GoalieStatRow, Skater, SkaterStatRow } from "@/lib/types/stats";
+import {
+    getGameById,
+    getGoalieStatsByGameId,
+    getGoaliesByTeam,
+    getMemberRoleByTeam,
+    getSkaterStatsByGameId,
+    getSkatersByTeam,
+} from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -25,51 +28,33 @@ export default async function GameLivePage({
         redirect("/login");
     }
 
-    const { data: game } = await supabase
-        .from("games")
-        .select("id, team_id, opponent")
-        .eq("id", params.gameId)
-        .maybeSingle();
+    const { data: game } = await getGameById(supabase, params.gameId);
 
     if (!game) {
         redirect("/dashboard/games");
     }
 
-    const { data: member } = await supabase
-        .from("team_members")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("team_id", game.team_id)
-        .eq("is_active", true)
-        .maybeSingle();
+    const { data: member } = await getMemberRoleByTeam(
+        supabase,
+        user.id,
+        game.team_id
+    );
 
     const canEdit = member?.role === "staff";
 
-    const { data: skaters } = await supabase
-        .from("players")
-        .select("id, name, number, position")
-        .eq("team_id", game.team_id)
-        .neq("position", "G")
-        .eq("is_active", true)
-        .order("number", { ascending: true });
+    const { data: skaters } = await getSkatersByTeam(supabase, game.team_id);
 
-    const { data: goalies } = await supabase
-        .from("players")
-        .select("id, name, number, position")
-        .eq("team_id", game.team_id)
-        .eq("position", "G")
-        .eq("is_active", true)
-        .order("number", { ascending: true });
+    const { data: goalies } = await getGoaliesByTeam(supabase, game.team_id);
 
-    const { data: skaterStats } = await supabase
-        .from("player_stats")
-        .select("player_id, goals, assists, shots, blocks, pim")
-        .eq("game_id", game.id);
+    const { data: skaterStats } = await getSkaterStatsByGameId(
+        supabase,
+        game.id
+    );
 
-    const { data: goalieStats } = await supabase
-        .from("goalie_stats")
-        .select("player_id, shots_against, saves, goals_against")
-        .eq("game_id", game.id);
+    const { data: goalieStats } = await getGoalieStatsByGameId(
+        supabase,
+        game.id
+    );
 
     return (
         <main className="min-h-svh bg-white">
