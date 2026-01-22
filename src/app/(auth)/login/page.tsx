@@ -4,15 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import React, { useState } from "react";
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -54,12 +46,12 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-svh w-full bg-white px-4 py-10">
-            <div className="mx-auto w-full max-w-[420px] pt-10">
-                <Card className="rounded-2xl border border-gray-200 shadow-sm">
-                    <CardHeader className="space-y-4 border-b border-gray-200 p-6">
+        <div className="min-h-screen w-full bg-muted px-4 py-10">
+            <div className="mx-auto w-full max-w-md pt-10">
+                <Card className="rounded-2xl border-2 border-border shadow-sm">
+                    <CardHeader className="space-y-4 border-b-2 border-border p-6">
                         <div className="flex items-center gap-3">
-                            <div className="grid h-10 w-10 place-items-center rounded-xl border border-gray-200 bg-white">
+                            <div className="grid h-10 w-10 place-items-center rounded-xl border-2 border-border bg-white">
                                 <span className="text-lg">🏒</span>
                             </div>
                             <div className="text-xl font-semibold tracking-tight">
@@ -88,7 +80,7 @@ export default function LoginPage() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="h-12 rounded-xl bg-gray-50"
+                                    className="h-12 rounded-xl border-2"
                                 />
                             </div>
 
@@ -102,14 +94,14 @@ export default function LoginPage() {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="h-12 rounded-xl bg-gray-50"
+                                    className="h-12 rounded-xl border-2"
                                 />
                             </div>
 
                             <Button
                                 type="submit"
                                 disabled={loading}
-                                className="h-12 w-full rounded-xl bg-black text-white hover:bg-black/90"
+                                className="h-12 w-full rounded-xl border-2 border-foreground bg-black text-white hover:bg-black/90"
                             >
                                 {loading ? "ログイン中..." : "ログイン"}
                             </Button>
@@ -117,22 +109,22 @@ export default function LoginPage() {
                                 <p className="text-sm text-red-600">{error}</p>
                             )}
 
-                            <button
-                                type="button"
-                                className="text-left text-sm text-gray-500 hover:text-gray-700"
+                            <Link
+                                href="/forgot-password"
+                                className="text-left text-sm text-muted-foreground hover:text-foreground"
                             >
                                 パスワードをお忘れですか？
-                            </button>
+                            </Link>
                         </CardContent>
 
-                        <CardFooter className="flex flex-col gap-4 border-t border-gray-200 p-6">
-                            <div className="text-sm text-gray-500">
+                        <CardFooter className="flex flex-col gap-4 border-t-2 border-border p-6">
+                            <div className="text-sm text-muted-foreground">
                                 アカウントをお持ちでないですか？
                             </div>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-12 w-full rounded-xl border-gray-200 bg-white"
+                                className="h-12 w-full rounded-xl border-2 border-foreground bg-white"
                                 asChild
                             >
                                 <Link href="/signup">サインアップ</Link>
@@ -140,6 +132,14 @@ export default function LoginPage() {
                         </CardFooter>
                     </form>
                 </Card>
+            </div>
+            <div className="fixed bottom-4 right-4 rounded-lg border-2 border-border bg-white px-4 py-3 text-xs text-muted-foreground shadow-sm">
+                <div className="font-semibold text-foreground">
+                    デモアカウント情報
+                </div>
+                <div>Staff: staff@leafs.com</div>
+                <div>Viewer: viewer@leafs.com</div>
+                <div>パスワード: 任意</div>
             </div>
         </div>
     );

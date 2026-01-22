@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import EditClient from "./EditClient";
 import type {
     Goalie,
@@ -62,13 +63,13 @@ export default async function GameEditPage({
     );
 
     return (
-        <main className="min-h-svh bg-white">
-            <div className="border-b border-gray-200 px-6 py-4">
-                <div className="text-sm font-medium text-gray-500">
-                    試合後スタッツ修正
-                </div>
-            </div>
-
+        <div className="space-y-4">
+            <Link
+                href={`/dashboard/games/${game.id}`}
+                className="text-xs text-muted-foreground hover:text-foreground"
+            >
+                ← 試合詳細へ
+            </Link>
             <EditClient
                 gameId={game.id}
                 opponent={game.opponent}
@@ -78,6 +79,6 @@ export default async function GameEditPage({
                 skaterStats={(skaterStats ?? []) as SkaterStatRow[]}
                 goalieStats={(goalieStats ?? []) as GoalieStatRow[]}
             />
-        </main>
+        </div>
     );
 }

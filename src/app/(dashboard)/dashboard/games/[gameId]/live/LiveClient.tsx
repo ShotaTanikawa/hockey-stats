@@ -12,6 +12,7 @@ import type {
     SkaterStat,
     SkaterStatRow,
 } from "@/lib/types/stats";
+import { useToast } from "@/hooks/use-toast";
 
 
 
@@ -49,6 +50,7 @@ export default function LiveClient({
     goalieStats,
 }: Props) {
     const supabase = createClient();
+    const { toast } = useToast();
     const [error, setError] = useState<string | null>(null);
     const [log, setLog] = useState<string[]>([]);
 
@@ -124,7 +126,13 @@ export default function LiveClient({
 
         if (error) {
             setSkaterState((prev) => ({ ...prev, [playerId]: previous }));
-            setError("保存に失敗しました。もう一度お試しください。");
+            const message = "保存に失敗しました。もう一度お試しください。";
+            setError(message);
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
             return;
         }
 
@@ -142,11 +150,11 @@ export default function LiveClient({
         const next: GoalieStat = {
             ...previous,
             shots_against:
-                previous.shots_against + (field === "shots_against" ? 1 : 1),
+                previous.shots_against + (field === "shots_against" ? 1 : 0),
             goals_against:
                 previous.goals_against + (field === "goals_against" ? 1 : 0),
-            saves:
-                previous.saves + (field === "shots_against" ? 1 : 0),
+            // MVP方針: liveではsavesを更新しない（試合後に確定）
+            saves: previous.saves,
         };
 
         setGoalieState((prev) => ({ ...prev, [playerId]: next }));
@@ -162,7 +170,13 @@ export default function LiveClient({
 
         if (error) {
             setGoalieState((prev) => ({ ...prev, [playerId]: previous }));
-            setError("保存に失敗しました。もう一度お試しください。");
+            const message = "保存に失敗しました。もう一度お試しください。";
+            setError(message);
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
             return;
         }
 
@@ -324,7 +338,6 @@ export default function LiveClient({
                                                 <span>
                                                     SA {stat.shots_against}
                                                 </span>
-                                                <span>SV {stat.saves}</span>
                                                 <span>
                                                     GA {stat.goals_against}
                                                 </span>

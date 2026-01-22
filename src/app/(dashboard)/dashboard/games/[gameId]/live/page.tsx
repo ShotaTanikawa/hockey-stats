@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import LiveClient from "./LiveClient";
 import type { Goalie, GoalieStatRow, Skater, SkaterStatRow } from "@/lib/types/stats";
 import {
@@ -57,15 +58,13 @@ export default async function GameLivePage({
     );
 
     return (
-        <main className="min-h-svh bg-white">
-            <div className="border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-500">
-                        ライブ入力
-                    </div>
-                </div>
-            </div>
-
+        <div className="space-y-4">
+            <Link
+                href={`/dashboard/games/${game.id}`}
+                className="text-xs text-muted-foreground hover:text-foreground"
+            >
+                ← 試合詳細へ
+            </Link>
             <LiveClient
                 gameId={game.id}
                 opponent={game.opponent}
@@ -75,6 +74,6 @@ export default async function GameLivePage({
                 skaterStats={(skaterStats ?? []) as SkaterStatRow[]}
                 goalieStats={(goalieStats ?? []) as GoalieStatRow[]}
             />
-        </main>
+        </div>
     );
 }

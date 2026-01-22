@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
     Goalie,
     GoalieStat,
@@ -13,6 +18,7 @@ import type {
     SkaterStat,
     SkaterStatRow,
 } from "@/lib/types/stats";
+import { useToast } from "@/hooks/use-toast";
 
 
 
@@ -40,6 +46,26 @@ const EMPTY_GOALIE: GoalieStat = {
     goals_against: 0,
 };
 
+function StatHelp({ label, description }: { label: string; description: string }) {
+    return (
+        <span className="inline-flex items-center gap-1">
+            {label}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="grid h-4 w-4 place-items-center rounded-full border border-border text-[10px] text-muted-foreground"
+                        aria-label={`${label} の定義`}
+                    >
+                        ?
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>{description}</TooltipContent>
+            </Tooltip>
+        </span>
+    );
+}
+
 function toNumber(value: string) {
     const parsed = Number(value);
     if (Number.isNaN(parsed) || parsed < 0) return 0;
@@ -56,6 +82,7 @@ export default function EditClient({
     goalieStats,
 }: Props) {
     const supabase = createClient();
+    const { toast } = useToast();
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -126,7 +153,13 @@ export default function EditClient({
             .upsert(skaterPayload, { onConflict: "game_id,player_id" });
 
         if (skaterError) {
-            setError("スケータースタッツの保存に失敗しました。");
+            const message = "スケータースタッツの保存に失敗しました。";
+            setError(message);
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
             setSaving(false);
             return;
         }
@@ -136,12 +169,19 @@ export default function EditClient({
             .upsert(goaliePayload, { onConflict: "game_id,player_id" });
 
         if (goalieError) {
-            setError("ゴーリースタッツの保存に失敗しました。");
+            const message = "ゴーリースタッツの保存に失敗しました。";
+            setError(message);
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
             setSaving(false);
             return;
         }
 
         setSaving(false);
+        toast({ title: "スタッツを保存しました" });
     }
 
     return (
@@ -182,11 +222,21 @@ export default function EditClient({
                     <CardContent className="p-6">
                         <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]">
                             <div>Name</div>
-                            <div>G</div>
-                            <div>A</div>
-                            <div>SOG</div>
-                            <div>BLK</div>
-                            <div>PIM</div>
+                            <div>
+                                <StatHelp label="G" description="Goals（ゴール数）" />
+                            </div>
+                            <div>
+                                <StatHelp label="A" description="Assists（アシスト数）" />
+                            </div>
+                            <div>
+                                <StatHelp label="SOG" description="Shots on Goal（枠内シュート数）" />
+                            </div>
+                            <div>
+                                <StatHelp label="BLK" description="Blocked Shots（ブロックショット数）" />
+                            </div>
+                            <div>
+                                <StatHelp label="PIM" description="Penalty Minutes（ペナルティ合計分）" />
+                            </div>
                         </div>
                         <div className="mt-3 space-y-3">
                             {skaters.map((player) => {
@@ -299,9 +349,15 @@ export default function EditClient({
                     <CardContent className="p-6">
                         <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr]">
                             <div>Name</div>
-                            <div>SA</div>
-                            <div>Saves</div>
-                            <div>GA</div>
+                            <div>
+                                <StatHelp label="SA" description="Shots Against（被シュート数）" />
+                            </div>
+                            <div>
+                                <StatHelp label="Saves" description="セーブ数（試合後に確定）" />
+                            </div>
+                            <div>
+                                <StatHelp label="GA" description="Goals Against（失点数）" />
+                            </div>
                         </div>
                         <div className="mt-3 space-y-3">
                             {goalies.map((player) => {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Tables } from "../../../database.types";
 import type {
     GameRow,
     GoalieStatRow,
@@ -9,33 +10,61 @@ import type {
     SkaterStatWithPlayer,
 } from "@/lib/types/stats";
 
+type TeamRow = Tables<"teams">;
+
 // チーム所属情報とチーム詳細をまとめて扱うための型
 type MemberWithTeam = {
     role: "staff" | "viewer";
-    teams: Array<{
-        id: string;
-        name: string;
-        season_label: string;
-    }> | null;
+    team: TeamRow | null;
 } | null;
 
 // ログインユーザーのチーム所属情報とチーム詳細を取得する
 export async function getMemberWithTeam(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     userId: string
 ) {
-    return supabase
+    const memberResult = await supabase
         .from("team_members")
-        .select("role, teams (id, name, season_label)")
+        .select("role, team_id")
         .eq("user_id", userId)
         .eq("is_active", true)
-        .maybeSingle()
-        .then((result) => result as { data: MemberWithTeam });
+        .maybeSingle();
+
+    // 一時デバッグ: team_membersの取得結果を確認
+    console.log("[debug] team_members", {
+        userId,
+        data: memberResult.data,
+        error: memberResult.error,
+    });
+
+    if (!memberResult.data?.team_id) {
+        return { data: null as MemberWithTeam };
+    }
+
+    const teamResult = await supabase
+        .from("teams")
+        .select("id, name, season_label")
+        .eq("id", memberResult.data.team_id)
+        .maybeSingle();
+
+    // 一時デバッグ: teamsの取得結果を確認
+    console.log("[debug] teams", {
+        teamId: memberResult.data.team_id,
+        data: teamResult.data,
+        error: teamResult.error,
+    });
+
+    return {
+        data: {
+            role: memberResult.data.role as "staff" | "viewer",
+            team: teamResult.data ?? null,
+        },
+    };
 }
 
 // チームに紐づく試合一覧を取得する（未指定時は全件）
 export async function getGamesByTeam(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     teamId?: string | null
 ) {
     let query = supabase
@@ -52,10 +81,14 @@ export async function getGamesByTeam(
 
 // シーズンに紐づく試合ID一覧を取得する
 export async function getGamesBySeason(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     teamId: string | null,
     seasonLabel: string
 ) {
+    if (!teamId) {
+        return { data: [] as Array<{ id: string }> };
+    }
+
     return supabase
         .from("games")
         .select("id")
@@ -64,11 +97,48 @@ export async function getGamesBySeason(
         .then((result) => result as { data: Array<{ id: string }> | null });
 }
 
-// チーム所属の選手一覧を取得する
-export async function getPlayersByTeam(
-    supabase: SupabaseClient,
+// チームに紐づくシーズン一覧を取得する（games.season から抽出）
+export async function getSeasonLabelsByTeam(
+    supabase: SupabaseClient<Database>,
     teamId: string | null
 ) {
+    // games.season をユニーク化して一覧化する
+    // セレクトの候補が無い場合でも空配列を返す
+    if (!teamId) {
+        return { data: [] as string[] };
+    }
+
+    const { data } = await supabase
+        .from("games")
+        .select("season")
+        .eq("team_id", teamId)
+        .order("season", { ascending: false });
+
+    const seasonLabels = (data ?? [])
+        .map((row) => row.season)
+        .filter((season): season is string => Boolean(season));
+
+    const unique = Array.from(new Set(seasonLabels));
+    return { data: unique };
+}
+
+// チーム所属の選手一覧を取得する
+export async function getPlayersByTeam(
+    supabase: SupabaseClient<Database>,
+    teamId: string | null
+) {
+    if (!teamId) {
+        return {
+            data: [] as Array<{
+                id: string;
+                name: string;
+                number: number;
+                position: string;
+                is_active: boolean;
+            }>,
+        };
+    }
+
     return supabase
         .from("players")
         .select("id, name, number, position, is_active")
@@ -79,9 +149,13 @@ export async function getPlayersByTeam(
 
 // チーム所属のスケーター一覧を取得する（G以外）
 export async function getSkatersByTeam(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     teamId: string | null
 ) {
+    if (!teamId) {
+        return { data: [] as Skater[] | null };
+    }
+
     return supabase
         .from("players")
         .select("id, name, number, position")
@@ -94,9 +168,13 @@ export async function getSkatersByTeam(
 
 // チーム所属のゴーリー一覧を取得する（Gのみ）
 export async function getGoaliesByTeam(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     teamId: string | null
 ) {
+    if (!teamId) {
+        return { data: [] as Goalie[] | null };
+    }
+
     return supabase
         .from("players")
         .select("id, name, number")
@@ -109,7 +187,7 @@ export async function getGoaliesByTeam(
 
 // 試合IDから試合詳細を取得する
 export async function getGameById(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameId: string
 ) {
     return supabase
@@ -122,7 +200,7 @@ export async function getGameById(
 
 // 試合IDからスケーター成績を取得する
 export async function getSkaterStatsByGameId(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameId: string
 ) {
     return supabase
@@ -134,7 +212,7 @@ export async function getSkaterStatsByGameId(
 
 // 試合IDからゴーリー成績を取得する
 export async function getGoalieStatsByGameId(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameId: string
 ) {
     return supabase
@@ -146,7 +224,7 @@ export async function getGoalieStatsByGameId(
 
 // 試合IDからスケーター成績 + 選手情報を取得する
 export async function getSkaterStatsWithPlayersByGameId(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameId: string
 ) {
     return supabase
@@ -160,7 +238,7 @@ export async function getSkaterStatsWithPlayersByGameId(
 
 // 試合IDからゴーリー成績 + 選手情報を取得する
 export async function getGoalieStatsWithPlayersByGameId(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameId: string
 ) {
     return supabase
@@ -174,7 +252,7 @@ export async function getGoalieStatsWithPlayersByGameId(
 
 // 複数試合IDからスケーター成績を取得する
 export async function getSkaterStatsByGameIds(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameIds: string[]
 ) {
     if (gameIds.length === 0) {
@@ -190,7 +268,7 @@ export async function getSkaterStatsByGameIds(
 
 // 複数試合IDからゴーリー成績を取得する
 export async function getGoalieStatsByGameIds(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     gameIds: string[]
 ) {
     if (gameIds.length === 0) {
@@ -206,7 +284,7 @@ export async function getGoalieStatsByGameIds(
 
 // チーム内でのユーザー権限を取得する
 export async function getMemberRoleByTeam(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     userId: string,
     teamId: string
 ) {
