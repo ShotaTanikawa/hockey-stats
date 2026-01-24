@@ -142,14 +142,6 @@ export default function LoginPage() {
                     </form>
                 </Card>
             </div>
-            <div className="fixed bottom-4 right-4 rounded-lg border-2 border-border bg-white px-4 py-3 text-xs text-muted-foreground shadow-sm">
-                <div className="font-semibold text-foreground">
-                    デモアカウント情報
-                </div>
-                <div>Staff: staff@leafs.com</div>
-                <div>Viewer: viewer@leafs.com</div>
-                <div>パスワード: 任意</div>
-            </div>
         </div>
     );
 }
