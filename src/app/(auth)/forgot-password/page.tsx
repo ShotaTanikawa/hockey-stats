@@ -3,7 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,8 +51,7 @@ export default function ForgotPasswordPage() {
 
         toast({
             title: "メールを送信しました",
-            description:
-                "パスワードリセット用のメールをご確認ください。",
+            description: "パスワードリセット用のメールをご確認ください。",
         });
     }
 
@@ -85,9 +89,7 @@ export default function ForgotPasswordPage() {
                                     placeholder="email@example.com"
                                     required
                                     value={email}
-                                    onChange={(e) =>
-                                        setEmail(e.target.value)
-                                    }
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="h-12 rounded-xl border-2"
                                 />
                             </div>
@@ -96,7 +98,9 @@ export default function ForgotPasswordPage() {
                                 disabled={isSubmitting}
                                 className="h-12 w-full rounded-xl border-2 border-foreground bg-black text-white hover:bg-black/90"
                             >
-                                {isSubmitting ? "送信中..." : "リセットメール送信"}
+                                {isSubmitting
+                                    ? "送信中..."
+                                    : "リセットメール送信"}
                             </Button>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-4 border-t-2 border-border p-6">

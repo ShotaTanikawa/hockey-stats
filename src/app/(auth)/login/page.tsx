@@ -4,7 +4,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import React, { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -60,7 +65,9 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-1">
-                            <div className="text-base font-semibold">ログイン</div>
+                            <div className="text-base font-semibold">
+                                ログイン
+                            </div>
                             <div className="text-sm text-gray-500">
                                 アカウント情報を入力してください
                             </div>
@@ -93,7 +100,9 @@ export default function LoginPage() {
                                     type="password"
                                     required
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
                                     className="h-12 rounded-xl border-2"
                                 />
                             </div>

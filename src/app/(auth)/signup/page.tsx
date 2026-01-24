@@ -41,7 +41,10 @@ export default function SignupPage() {
             body: JSON.stringify({ email, password, joinCode }),
         });
 
-        const result = (await response.json()) as { ok?: boolean; error?: string };
+        const result = (await response.json()) as {
+            ok?: boolean;
+            error?: string;
+        };
 
         setIsSubmitting(false);
 
@@ -69,7 +72,9 @@ export default function SignupPage() {
                         </div>
 
                         <div className="space-y-1">
-                            <div className="text-base font-semibold">サインアップ</div>
+                            <div className="text-base font-semibold">
+                                サインアップ
+                            </div>
                             <div className="text-sm text-gray-500">
                                 新しいアカウントを作成
                             </div>
@@ -120,7 +125,9 @@ export default function SignupPage() {
                                     className="h-12 rounded-xl border-2"
                                     value={joinCode}
                                     onChange={(event) =>
-                                        setJoinCode(event.target.value.toUpperCase())
+                                        setJoinCode(
+                                            event.target.value.toUpperCase()
+                                        )
                                     }
                                 />
                                 <p className="text-xs text-gray-500">
@@ -129,7 +136,8 @@ export default function SignupPage() {
                             </div>
 
                             <div className="rounded-lg border-2 border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
-                                ※ 新規ユーザーは自動的に Viewer として登録されます
+                                ※ 新規ユーザーは自動的に Viewer
+                                として登録されます
                             </div>
 
                             {errorMessage && (

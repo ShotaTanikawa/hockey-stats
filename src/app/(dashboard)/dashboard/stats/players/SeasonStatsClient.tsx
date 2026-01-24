@@ -3,12 +3,7 @@
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Tooltip,
     TooltipContent,
@@ -25,7 +20,13 @@ type Props = {
 
 // ヘッダーに表示するスタッツ定義のツールチップ
 // 見出しに「?」を付けて定義を短く表示する
-function StatHelp({ label, description }: { label: string; description: string }) {
+function StatHelp({
+    label,
+    description,
+}: {
+    label: string;
+    description: string;
+}) {
     return (
         <span className="inline-flex items-center gap-1">
             {label}
@@ -162,7 +163,9 @@ export default function SeasonStatsClient({
                                         <div>{player.gp}</div>
                                         <div>{player.goals}</div>
                                         <div>{player.assists}</div>
-                                        <div>{player.goals + player.assists}</div>
+                                        <div>
+                                            {player.goals + player.assists}
+                                        </div>
                                         <div>{player.shots}</div>
                                         <div>{player.blocks}</div>
                                         <div>{player.pim}</div>
@@ -170,8 +173,9 @@ export default function SeasonStatsClient({
                                             {player.shots === 0
                                                 ? "-"
                                                 : formatPercent(
-                                                    player.goals / player.shots
-                                                )}
+                                                      player.goals /
+                                                          player.shots
+                                                  )}
                                         </div>
                                     </div>
                                 ))}
@@ -239,11 +243,15 @@ export default function SeasonStatsClient({
                                                 {player.shots_against === 0
                                                     ? "-"
                                                     : formatPercent(
-                                                        player.saves /
-                                                        player.shots_against
-                                                    )}
+                                                          player.saves /
+                                                              player.shots_against
+                                                      )}
                                             </div>
-                                            <div>{gaa === null ? "-" : gaa.toFixed(2)}</div>
+                                            <div>
+                                                {gaa === null
+                                                    ? "-"
+                                                    : gaa.toFixed(2)}
+                                            </div>
                                         </div>
                                     );
                                 })}

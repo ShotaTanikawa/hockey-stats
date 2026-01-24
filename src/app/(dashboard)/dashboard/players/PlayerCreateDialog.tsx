@@ -42,27 +42,40 @@ export default function PlayerCreateDialog({
     }
 
     // 選手追加処理（バリデーションを含む）
+    // staff 権限のみ許可し、viewerはエラーにする
     async function handleSubmit() {
         setErrorMessage(null);
 
         if (!teamId) {
             const message = "チーム情報が取得できません。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "保存エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
             return;
         }
 
         if (!isStaff) {
             const message = "この操作はスタッフのみ可能です。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "権限エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "権限エラー",
+                description: message,
+            });
             return;
         }
 
         if (!name.trim()) {
             const message = "選手名は必須です。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "入力エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "入力エラー",
+                description: message,
+            });
             return;
         }
 
@@ -70,7 +83,11 @@ export default function PlayerCreateDialog({
         if (!Number.isInteger(parsedNumber) || parsedNumber <= 0) {
             const message = "背番号は1以上の整数を入力してください。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "入力エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "入力エラー",
+                description: message,
+            });
             return;
         }
 
@@ -122,7 +139,10 @@ export default function PlayerCreateDialog({
                         </CardHeader>
                         <CardContent className="space-y-5 px-6 py-5">
                             <div className="space-y-2">
-                                <Label htmlFor="player-name" className="text-sm">
+                                <Label
+                                    htmlFor="player-name"
+                                    className="text-sm"
+                                >
                                     選手名
                                 </Label>
                                 <Input
@@ -138,7 +158,10 @@ export default function PlayerCreateDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="player-number" className="text-sm">
+                                <Label
+                                    htmlFor="player-number"
+                                    className="text-sm"
+                                >
                                     背番号
                                 </Label>
                                 <Input
@@ -154,7 +177,10 @@ export default function PlayerCreateDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="player-position" className="text-sm">
+                                <Label
+                                    htmlFor="player-position"
+                                    className="text-sm"
+                                >
                                     ポジション
                                 </Label>
                                 <select

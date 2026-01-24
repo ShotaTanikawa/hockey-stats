@@ -21,6 +21,7 @@ export default function DashboardShell({
     roleLabel,
     children,
 }: Props) {
+    // 現在のパスでアクティブタブを判定する
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
@@ -36,11 +37,15 @@ export default function DashboardShell({
         router.refresh();
     }
 
+    // ヘッダー / コンテンツ / 下部ナビを共通化する
     return (
         <div className="min-h-svh bg-white">
             <header className="border-b-2 border-border bg-card">
-                <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-                    <div className="flex items-center gap-3">
+                <div className="mx-auto flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
                         <div className="grid h-9 w-9 place-items-center rounded-lg border-2 border-foreground bg-white">
                             <span>🏒</span>
                         </div>
@@ -52,7 +57,7 @@ export default function DashboardShell({
                                 {seasonLabel}
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
                     <div className="relative">
                         <Button
@@ -72,10 +77,11 @@ export default function DashboardShell({
                                 </div>
                                 <div className="px-2 py-2">
                                     <span
-                                        className={`rounded-full border-2 px-2 py-0.5 text-[10px] font-semibold ${roleLabel === "staff"
-                                            ? "bg-foreground text-background"
-                                            : "bg-muted text-foreground"
-                                            }`}
+                                        className={`rounded-full border-2 px-2 py-0.5 text-[10px] font-semibold ${
+                                            roleLabel === "staff"
+                                                ? "bg-foreground text-background"
+                                                : "bg-muted text-foreground"
+                                        }`}
                                     >
                                         {roleLabel.toUpperCase()}
                                     </span>
@@ -107,31 +113,34 @@ export default function DashboardShell({
             </main>
 
             <nav className="border-t-2 border-border bg-card">
-                <div className="mx-auto grid w-full max-w-5xl grid-cols-3 text-center text-xs text-muted-foreground">
+                <div className="mx-auto grid w-full grid-cols-3 text-center text-xs text-muted-foreground">
                     <Link
                         href="/dashboard/games"
-                        className={`py-3 ${isActive("/dashboard/games")
-                            ? "bg-foreground text-background"
-                            : "hover:bg-muted"
-                            }`}
+                        className={`py-3 ${
+                            isActive("/dashboard/games")
+                                ? "bg-foreground text-background"
+                                : "hover:bg-muted"
+                        }`}
                     >
                         Games
                     </Link>
                     <Link
                         href="/dashboard/players"
-                        className={`py-3 ${isActive("/dashboard/players")
-                            ? "bg-foreground text-background"
-                            : "hover:bg-muted"
-                            }`}
+                        className={`py-3 ${
+                            isActive("/dashboard/players")
+                                ? "bg-foreground text-background"
+                                : "hover:bg-muted"
+                        }`}
                     >
                         Players
                     </Link>
                     <Link
                         href="/dashboard/stats/players"
-                        className={`py-3 ${isActive("/dashboard/stats")
-                            ? "bg-foreground text-background"
-                            : "hover:bg-muted"
-                            }`}
+                        className={`py-3 ${
+                            isActive("/dashboard/stats")
+                                ? "bg-foreground text-background"
+                                : "hover:bg-muted"
+                        }`}
                     >
                         Stats
                     </Link>

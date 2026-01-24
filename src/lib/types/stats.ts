@@ -55,24 +55,26 @@ export type GoalieStatRow = GoalieStat & {
 };
 
 export type SkaterStatWithPlayer = SkaterStatRow & {
-    players: Array<{
+    players: {
         name: string;
         number: number;
         position: string;
-    }> | null;
+    } | null;
 };
 
 export type GoalieStatWithPlayer = GoalieStatRow & {
-    players: Array<{
+    players: {
         name: string;
         number: number;
-    }> | null;
+    } | null;
 };
 
-export type SkaterSummaryRow = Skater & SkaterStat & {
-    gp: number;
-};
+export type SkaterSummaryRow = Skater &
+    SkaterStat & {
+        gp: number;
+    };
 
-export type GoalieSummaryRow = Goalie & GoalieStat & {
-    gp: number;
-};
+export type GoalieSummaryRow = Goalie &
+    GoalieStat & {
+        gp: number;
+    };

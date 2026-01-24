@@ -27,7 +27,10 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        return NextResponse.json({ error: "未ログインです。" }, { status: 401 });
+        return NextResponse.json(
+            { error: "未ログインです。" },
+            { status: 401 }
+        );
     }
 
     const { teamId, userId } = parsed.data;

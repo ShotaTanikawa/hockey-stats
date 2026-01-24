@@ -20,8 +20,6 @@ import type {
 } from "@/lib/types/stats";
 import { useToast } from "@/hooks/use-toast";
 
-
-
 type Props = {
     gameId: string;
     opponent: string;
@@ -46,7 +44,14 @@ const EMPTY_GOALIE: GoalieStat = {
     goals_against: 0,
 };
 
-function StatHelp({ label, description }: { label: string; description: string }) {
+// テーブル見出しにスタッツ定義を表示するツールチップ
+function StatHelp({
+    label,
+    description,
+}: {
+    label: string;
+    description: string;
+}) {
     return (
         <span className="inline-flex items-center gap-1">
             {label}
@@ -66,6 +71,7 @@ function StatHelp({ label, description }: { label: string; description: string }
     );
 }
 
+// フォーム入力を安全な整数に丸める（負数は0扱い）
 function toNumber(value: string) {
     const parsed = Number(value);
     if (Number.isNaN(parsed) || parsed < 0) return 0;
@@ -131,6 +137,7 @@ export default function EditClient({
         setGoalieState(initialGoalieState);
     }, [initialGoalieState]);
 
+    // すべての選手分をまとめて upsert し、試合後の最終値として保存する
     async function handleSave() {
         if (!canEdit) return;
         setError(null);
@@ -223,19 +230,34 @@ export default function EditClient({
                         <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]">
                             <div>Name</div>
                             <div>
-                                <StatHelp label="G" description="Goals（ゴール数）" />
+                                <StatHelp
+                                    label="G"
+                                    description="Goals（ゴール数）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="A" description="Assists（アシスト数）" />
+                                <StatHelp
+                                    label="A"
+                                    description="Assists（アシスト数）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="SOG" description="Shots on Goal（枠内シュート数）" />
+                                <StatHelp
+                                    label="SOG"
+                                    description="Shots on Goal（枠内シュート数）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="BLK" description="Blocked Shots（ブロックショット数）" />
+                                <StatHelp
+                                    label="BLK"
+                                    description="Blocked Shots（ブロックショット数）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="PIM" description="Penalty Minutes（ペナルティ合計分）" />
+                                <StatHelp
+                                    label="PIM"
+                                    description="Penalty Minutes（ペナルティ合計分）"
+                                />
                             </div>
                         </div>
                         <div className="mt-3 space-y-3">
@@ -350,13 +372,22 @@ export default function EditClient({
                         <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr]">
                             <div>Name</div>
                             <div>
-                                <StatHelp label="SA" description="Shots Against（被シュート数）" />
+                                <StatHelp
+                                    label="SA"
+                                    description="Shots Against（被シュート数）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="Saves" description="セーブ数（試合後に確定）" />
+                                <StatHelp
+                                    label="Saves"
+                                    description="セーブ数（試合後に確定）"
+                                />
                             </div>
                             <div>
-                                <StatHelp label="GA" description="Goals Against（失点数）" />
+                                <StatHelp
+                                    label="GA"
+                                    description="Goals Against（失点数）"
+                                />
                             </div>
                         </div>
                         <div className="mt-3 space-y-3">
@@ -381,10 +412,9 @@ export default function EditClient({
                                                     ...prev,
                                                     [player.id]: {
                                                         ...stat,
-                                                        shots_against:
-                                                            toNumber(
-                                                                e.target.value
-                                                            ),
+                                                        shots_against: toNumber(
+                                                            e.target.value
+                                                        ),
                                                     },
                                                 }))
                                             }
@@ -416,10 +446,9 @@ export default function EditClient({
                                                     ...prev,
                                                     [player.id]: {
                                                         ...stat,
-                                                        goals_against:
-                                                            toNumber(
-                                                                e.target.value
-                                                            ),
+                                                        goals_against: toNumber(
+                                                            e.target.value
+                                                        ),
                                                     },
                                                 }))
                                             }

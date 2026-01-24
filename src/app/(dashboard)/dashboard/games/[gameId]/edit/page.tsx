@@ -22,8 +22,9 @@ export const dynamic = "force-dynamic";
 export default async function GameEditPage({
     params,
 }: {
-    params: { gameId: string };
+    params: Promise<{ gameId: string }>;
 }) {
+    const { gameId } = await params;
     const supabase = await createClient();
 
     const {
@@ -34,7 +35,7 @@ export default async function GameEditPage({
         redirect("/login");
     }
 
-    const { data: game } = await getGameById(supabase, params.gameId);
+    const { data: game } = await getGameById(supabase, gameId);
 
     if (!game) {
         redirect("/dashboard/games");

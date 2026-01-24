@@ -46,20 +46,29 @@ export default function PlayerEditDialog({
     }
 
     // 選手情報を更新する
+    // is_active を切り替えて除籍/復帰を表現する
     async function handleSubmit() {
         setErrorMessage(null);
 
         if (!isStaff) {
             const message = "この操作はスタッフのみ可能です。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "権限エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "権限エラー",
+                description: message,
+            });
             return;
         }
 
         if (!name.trim()) {
             const message = "選手名は必須です。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "入力エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "入力エラー",
+                description: message,
+            });
             return;
         }
 
@@ -67,7 +76,11 @@ export default function PlayerEditDialog({
         if (!Number.isInteger(parsedNumber) || parsedNumber <= 0) {
             const message = "背番号は1以上の整数を入力してください。";
             setErrorMessage(message);
-            toast({ variant: "destructive", title: "入力エラー", description: message });
+            toast({
+                variant: "destructive",
+                title: "入力エラー",
+                description: message,
+            });
             return;
         }
 
@@ -123,7 +136,10 @@ export default function PlayerEditDialog({
                         </CardHeader>
                         <CardContent className="space-y-5 px-6 py-5">
                             <div className="space-y-2">
-                                <Label htmlFor="edit-player-name" className="text-sm">
+                                <Label
+                                    htmlFor="edit-player-name"
+                                    className="text-sm"
+                                >
                                     選手名
                                 </Label>
                                 <Input

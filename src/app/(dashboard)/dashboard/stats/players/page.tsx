@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardStatsPlayersPage({
     searchParams,
 }: {
-    searchParams?: { season?: string };
+    searchParams?: Promise<{ season?: string }>;
 }) {
     const supabase = await createClient();
 
@@ -36,7 +36,8 @@ export default async function DashboardStatsPlayersPage({
     const team = member?.team ?? null;
     const teamId = team?.id ?? null;
     const fallbackSeason = team?.season_label ?? "-";
-    const selectedSeason = searchParams?.season ?? fallbackSeason;
+    const resolvedSearchParams = await searchParams;
+    const selectedSeason = resolvedSearchParams?.season ?? fallbackSeason;
 
     // シーズン内の試合IDを先に取得しておく
     const { data: games } = await getGamesBySeason(
@@ -61,6 +62,7 @@ export default async function DashboardStatsPlayersPage({
         gameIds
     );
 
+    // 出場試合数は game_id のユニーク数で算出する
     const skaterGameCounts = new Map<string, Set<string>>();
     const skaterTotals = new Map<string, SkaterSummaryRow>();
 
@@ -76,6 +78,7 @@ export default async function DashboardStatsPlayersPage({
         });
     });
 
+    // 試合スタッツをプレイヤー別に集計する
     (skaterStats ?? []).forEach((stat) => {
         const row = skaterTotals.get(stat.player_id);
         if (!row) return;
@@ -93,6 +96,7 @@ export default async function DashboardStatsPlayersPage({
         }
     });
 
+    // 集計済みのユニーク試合数をGPに反映
     skaterGameCounts.forEach((set, playerId) => {
         const row = skaterTotals.get(playerId);
         if (row) {
@@ -100,6 +104,7 @@ export default async function DashboardStatsPlayersPage({
         }
     });
 
+    // ゴーリーも同様にGPと合計値を集計
     const goalieGameCounts = new Map<string, Set<string>>();
     const goalieTotals = new Map<string, GoalieSummaryRow>();
 

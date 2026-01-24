@@ -52,7 +52,10 @@ export default async function DashboardPlayersPage() {
     const isStaff = member?.role === "staff";
 
     // アクティブな選手を背番号順で取得
-    const { data: players } = await getPlayersByTeam(supabase, team?.id ?? null);
+    const { data: players } = await getPlayersByTeam(
+        supabase,
+        team?.id ?? null
+    );
 
     const playerRows = (players ?? []) as PlayerRow[];
 

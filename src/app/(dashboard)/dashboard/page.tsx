@@ -34,10 +34,11 @@ export default async function DashboardPage() {
             <div className="mb-4 flex items-center gap-3">
                 <div className="text-lg font-semibold">Dashboard</div>
                 <span
-                    className={`rounded-full border-2 px-2 py-0.5 text-xs font-semibold ${isStaff
-                        ? "bg-foreground text-background"
-                        : "bg-muted text-foreground"
-                        }`}
+                    className={`rounded-full border-2 px-2 py-0.5 text-xs font-semibold ${
+                        isStaff
+                            ? "bg-foreground text-background"
+                            : "bg-muted text-foreground"
+                    }`}
                 >
                     {roleLabel.toUpperCase()}
                 </span>
@@ -52,7 +53,9 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent className="grid gap-6 py-6 sm:grid-cols-2">
                     <div>
-                        <div className="text-xs text-muted-foreground">Team</div>
+                        <div className="text-xs text-muted-foreground">
+                            Team
+                        </div>
                         <div className="text-sm font-semibold">{teamName}</div>
                     </div>
                     <div>
@@ -64,16 +67,18 @@ export default async function DashboardPage() {
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs text-muted-foreground">Email</div>
+                        <div className="text-xs text-muted-foreground">
+                            Email
+                        </div>
                         <div className="text-sm font-semibold">
                             {user.email}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs text-muted-foreground">Role</div>
-                        <div className="text-sm font-semibold">
-                            {roleLabel}
+                        <div className="text-xs text-muted-foreground">
+                            Role
                         </div>
+                        <div className="text-sm font-semibold">{roleLabel}</div>
                     </div>
                 </CardContent>
             </Card>

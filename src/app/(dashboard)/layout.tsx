@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getMemberWithTeam } from "@/lib/supabase/queries";
 import DashboardShell from "@/components/layouts/DashboardShell";
 
+// 認証情報に依存するため常に動的にレンダリングする
 export const dynamic = "force-dynamic";
 
 type Props = {
@@ -10,19 +11,21 @@ type Props = {
 };
 
 export default async function DashboardLayout({ children }: Props) {
-    // ログイン中ユーザーを取得（未ログインは/loginへ）
+    // Server Component で Supabase を初期化（cookie連携あり）
     const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
+        // 未ログインは保護エリアに入れない
         redirect("/login");
     }
 
     // チーム情報とロールを取得して共通ヘッダーに渡す
+    // UI側の権限表示とメニューの状態管理に使用
     const { data: member } = await getMemberWithTeam(supabase, user.id);
-    // team_members.team_id は多対1なので配列の先頭を使う
+    // team_members.team_id は1ユーザー1チーム前提
     const team = member?.team ?? null;
     const teamName = team?.name ?? "Unknown Team";
     const seasonLabel = team?.season_label ?? "-";

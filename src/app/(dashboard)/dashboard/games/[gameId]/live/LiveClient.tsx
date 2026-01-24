@@ -14,8 +14,6 @@ import type {
 } from "@/lib/types/stats";
 import { useToast } from "@/hooks/use-toast";
 
-
-
 type Props = {
     gameId: string;
     opponent: string;
@@ -54,6 +52,7 @@ export default function LiveClient({
     const [error, setError] = useState<string | null>(null);
     const [log, setLog] = useState<string[]>([]);
 
+    // 既存スタッツを初期状態に落とし込む（未登録は0で埋める）
     const initialSkaterState = useMemo(() => {
         const map: Record<string, SkaterStat> = {};
         skaters.forEach((player) => {
@@ -71,6 +70,7 @@ export default function LiveClient({
         return map;
     }, [skaters, skaterStats]);
 
+    // ゴーリーも同様に初期状態を作る
     const initialGoalieState = useMemo(() => {
         const map: Record<string, GoalieStat> = {};
         goalies.forEach((player) => {
@@ -103,10 +103,40 @@ export default function LiveClient({
         setLog((prev) => [message, ...prev].slice(0, 6));
     }
 
-    async function updateSkater(
-        playerId: string,
-        field: keyof SkaterStat
-    ) {
+    const playerLabelMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        skaters.forEach((player) => {
+            map[player.id] = `#${player.number} ${player.name}`;
+        });
+        goalies.forEach((player) => {
+            map[player.id] = `#${player.number} ${player.name}`;
+        });
+        return map;
+    }, [skaters, goalies]);
+
+    function getPlayerLabel(playerId: string) {
+        return playerLabelMap[playerId] ?? `#${playerId}`;
+    }
+
+    function formatSkaterLog(field: keyof SkaterStat) {
+        switch (field) {
+            case "goals":
+                return "GOAL";
+            case "assists":
+                return "ASSIST";
+            case "shots":
+                return "SHOT";
+            case "blocks":
+                return "BLOCK";
+            case "pim":
+                return "PIM";
+            default:
+                return field;
+        }
+    }
+
+    // クリックで1加算し、その場でupsertする（オプティミスティック更新）
+    async function updateSkater(playerId: string, field: keyof SkaterStat) {
         if (!canEdit) return;
         setError(null);
 
@@ -136,9 +166,10 @@ export default function LiveClient({
             return;
         }
 
-        pushLog(`#${playerId} ${field.toUpperCase()} +1`);
+        pushLog(`${getPlayerLabel(playerId)} ${formatSkaterLog(field)} +1`);
     }
 
+    // MVPではSA/GAのみ更新し、Savesは試合後に確定する
     async function updateGoalie(
         playerId: string,
         field: "shots_against" | "goals_against"
@@ -181,7 +212,7 @@ export default function LiveClient({
         }
 
         pushLog(
-            `#${playerId} ${field === "shots_against" ? "SA" : "GA"} +1`
+            `${getPlayerLabel(playerId)} ${field === "shots_against" ? "SA" : "GA"} +1`
         );
     }
 
@@ -189,9 +220,7 @@ export default function LiveClient({
         <div className="mx-auto w-full max-w-5xl px-6 py-8">
             <div className="mb-6">
                 <div className="text-sm font-semibold">ライブ入力</div>
-                <div className="text-xs text-gray-500">
-                    vs {opponent}
-                </div>
+                <div className="text-xs text-gray-500">vs {opponent}</div>
             </div>
 
             {!canEdit && (
@@ -210,16 +239,13 @@ export default function LiveClient({
                 <div className="space-y-6">
                     <Card className="border-gray-200">
                         <CardHeader className="border-b border-gray-200">
-                            <CardTitle className="text-base">
-                                Skaters
-                            </CardTitle>
+                            <CardTitle className="text-base">Skaters</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-4">
                                 {skaters.map((player) => {
                                     const stat =
-                                        skaterState[player.id] ??
-                                        EMPTY_SKATER;
+                                        skaterState[player.id] ?? EMPTY_SKATER;
                                     return (
                                         <div
                                             key={player.id}
@@ -316,16 +342,13 @@ export default function LiveClient({
 
                     <Card className="border-gray-200">
                         <CardHeader className="border-b border-gray-200">
-                            <CardTitle className="text-base">
-                                Goalies
-                            </CardTitle>
+                            <CardTitle className="text-base">Goalies</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-4">
                                 {goalies.map((player) => {
                                     const stat =
-                                        goalieState[player.id] ??
-                                        EMPTY_GOALIE;
+                                        goalieState[player.id] ?? EMPTY_GOALIE;
                                     return (
                                         <div
                                             key={player.id}
@@ -382,9 +405,7 @@ export default function LiveClient({
 
                 <Card className="border-gray-200">
                     <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-base">
-                            Event Log
-                        </CardTitle>
+                        <CardTitle className="text-base">Event Log</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
                         {log.length === 0 ? (

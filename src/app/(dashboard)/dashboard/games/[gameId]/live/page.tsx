@@ -2,7 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import LiveClient from "./LiveClient";
-import type { Goalie, GoalieStatRow, Skater, SkaterStatRow } from "@/lib/types/stats";
+import type {
+    Goalie,
+    GoalieStatRow,
+    Skater,
+    SkaterStatRow,
+} from "@/lib/types/stats";
 import {
     getGameById,
     getGoalieStatsByGameId,
@@ -17,8 +22,9 @@ export const dynamic = "force-dynamic";
 export default async function GameLivePage({
     params,
 }: {
-    params: { gameId: string };
+    params: Promise<{ gameId: string }>;
 }) {
+    const { gameId } = await params;
     const supabase = await createClient();
 
     const {
@@ -29,9 +35,17 @@ export default async function GameLivePage({
         redirect("/login");
     }
 
-    const { data: game } = await getGameById(supabase, params.gameId);
+    const { data: game, error: gameError } = await getGameById(
+        supabase,
+        gameId
+    );
 
     if (!game) {
+        console.log("[debug] live: game not found", {
+            gameId,
+            userId: user.id,
+            error: gameError?.message ?? null,
+        });
         redirect("/dashboard/games");
     }
 
@@ -42,6 +56,17 @@ export default async function GameLivePage({
     );
 
     const canEdit = member?.role === "staff";
+
+    // viewer はライブ入力不可のため、試合詳細へ戻す
+    if (!canEdit) {
+        console.log("[debug] live: not staff", {
+            gameId: game.id,
+            teamId: game.team_id,
+            userId: user.id,
+            role: member?.role ?? null,
+        });
+        redirect(`/dashboard/games/${game.id}`);
+    }
 
     const { data: skaters } = await getSkatersByTeam(supabase, game.team_id);
 

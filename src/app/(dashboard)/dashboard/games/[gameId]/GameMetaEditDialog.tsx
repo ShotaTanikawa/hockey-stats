@@ -1,73 +1,53 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { GameRow } from "@/lib/types/stats";
 
-type GameCreateDialogProps = {
-    teamId?: string | null;
-    seasonLabel?: string | null;
-};
-
-type CreateGamePayload = {
-    game_date: string;
-    opponent: string;
-    venue: string | null;
-    period_minutes: number;
-    has_overtime: boolean;
-    team_id: string;
-    season: string | null;
+type Props = {
+    game: GameRow;
+    canEdit: boolean;
 };
 
 const PERIOD_MINUTES_OPTIONS = [15, 20] as const;
 type PeriodMinutes = (typeof PERIOD_MINUTES_OPTIONS)[number];
 
-export default function GameCreateDialog({
-    teamId,
-    seasonLabel,
-}: GameCreateDialogProps) {
+export default function GameMetaEditDialog({ game, canEdit }: Props) {
     const router = useRouter();
-    const supabase = useMemo(() => createClient(), []);
+    const supabase = createClient();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
-    const [gameDate, setGameDate] = useState("");
-    const [opponent, setOpponent] = useState("");
-    const [venue, setVenue] = useState("");
-    const [periodMinutes, setPeriodMinutes] = useState<PeriodMinutes>(15);
-    const [hasOvertime, setHasOvertime] = useState(false);
+    const [gameDate, setGameDate] = useState(game.game_date);
+    const [opponent, setOpponent] = useState(game.opponent);
+    const [venue, setVenue] = useState(game.venue ?? "");
+    const [periodMinutes, setPeriodMinutes] = useState<PeriodMinutes>(
+        (game.period_minutes as PeriodMinutes) ?? 15
+    );
+    const [hasOvertime, setHasOvertime] = useState(game.has_overtime);
+    const [season, setSeason] = useState(game.season ?? "");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // 入力内容を初期化する
-    function resetForm() {
-        setGameDate("");
-        setOpponent("");
-        setVenue("");
-        setPeriodMinutes(15);
-        setHasOvertime(false);
+    useEffect(() => {
+        if (!isOpen) return;
+        setGameDate(game.game_date);
+        setOpponent(game.opponent);
+        setVenue(game.venue ?? "");
+        setPeriodMinutes((game.period_minutes as PeriodMinutes) ?? 15);
+        setHasOvertime(game.has_overtime);
+        setSeason(game.season ?? "");
         setErrorMessage(null);
-    }
+    }, [isOpen, game]);
 
-    // 試合作成処理（バリデーションを含む）
-    // season はチームの既定ラベルを引き継ぐ
-    async function handleSubmit() {
+    async function handleSave() {
+        if (!canEdit) return;
         setErrorMessage(null);
-
-        if (!teamId) {
-            const message = "チーム情報が取得できません。";
-            setErrorMessage(message);
-            toast({
-                variant: "destructive",
-                title: "保存エラー",
-                description: message,
-            });
-            return;
-        }
 
         if (!gameDate || !opponent.trim()) {
             const message = "試合日と対戦相手は必須です。";
@@ -93,21 +73,17 @@ export default function GameCreateDialog({
 
         setIsSaving(true);
 
-        const payload: CreateGamePayload = {
-            game_date: gameDate,
-            opponent: opponent.trim(),
-            venue: venue.trim() ? venue.trim() : null,
-            period_minutes: periodMinutes,
-            has_overtime: hasOvertime,
-            team_id: teamId,
-            season: seasonLabel ?? null,
-        };
-
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from("games")
-            .insert(payload)
-            .select("id")
-            .maybeSingle();
+            .update({
+                game_date: gameDate,
+                opponent: opponent.trim(),
+                venue: venue.trim() ? venue.trim() : null,
+                period_minutes: periodMinutes,
+                has_overtime: hasOvertime,
+                season: season.trim() ? season.trim() : null,
+            })
+            .eq("id", game.id);
 
         setIsSaving(false);
 
@@ -122,26 +98,49 @@ export default function GameCreateDialog({
         }
 
         setIsOpen(false);
-        resetForm();
-        toast({ title: "試合を作成しました" });
-
-        // 一覧を最新化する
+        toast({ title: "試合情報を更新しました" });
         router.refresh();
+    }
 
-        // 作成直後にライブ入力へ移動したい場合は下記を有効化する
-        // if (data?.id) {
-        //     router.push(`/dashboard/games/${data.id}/live`);
-        // }
+    async function handleDelete() {
+        if (!canEdit) return;
+        const confirmed = window.confirm(
+            "この試合を削除しますか？関連スタッツも削除されます。"
+        );
+        if (!confirmed) return;
+
+        setIsSaving(true);
+        const { error } = await supabase
+            .from("games")
+            .delete()
+            .eq("id", game.id);
+        setIsSaving(false);
+
+        if (error) {
+            setErrorMessage(error.message);
+            toast({
+                variant: "destructive",
+                title: "削除エラー",
+                description: error.message,
+            });
+            return;
+        }
+
+        toast({ title: "試合を削除しました" });
+        router.push("/dashboard/games");
+        router.refresh();
     }
 
     return (
         <>
             <Button
-                className="h-10 rounded-xl bg-black px-4 text-white hover:bg-black/90"
+                variant="outline"
+                size="sm"
+                className="border-2"
                 onClick={() => setIsOpen(true)}
-                disabled={!teamId}
+                disabled={!canEdit}
             >
-                ＋ 新規作成
+                試合編集
             </Button>
 
             {isOpen && (
@@ -149,16 +148,19 @@ export default function GameCreateDialog({
                     <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">
                         <CardHeader className="border-b border-gray-200 px-6 py-4">
                             <div className="text-sm font-semibold">
-                                試合作成
+                                試合編集
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-5 px-6 py-5">
                             <div className="space-y-2">
-                                <Label htmlFor="game-date" className="text-sm">
+                                <Label
+                                    htmlFor="edit-game-date"
+                                    className="text-sm"
+                                >
                                     試合日
                                 </Label>
                                 <Input
-                                    id="game-date"
+                                    id="edit-game-date"
                                     type="date"
                                     className="h-11 rounded-xl bg-gray-50"
                                     value={gameDate}
@@ -169,13 +171,15 @@ export default function GameCreateDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="opponent" className="text-sm">
+                                <Label
+                                    htmlFor="edit-opponent"
+                                    className="text-sm"
+                                >
                                     対戦相手
                                 </Label>
                                 <Input
-                                    id="opponent"
+                                    id="edit-opponent"
                                     type="text"
-                                    placeholder="Tigers"
                                     className="h-11 rounded-xl bg-gray-50"
                                     value={opponent}
                                     onChange={(event) =>
@@ -185,13 +189,12 @@ export default function GameCreateDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="venue" className="text-sm">
+                                <Label htmlFor="edit-venue" className="text-sm">
                                     会場（任意）
                                 </Label>
                                 <Input
-                                    id="venue"
+                                    id="edit-venue"
                                     type="text"
-                                    placeholder="Tokyo Ice Arena"
                                     className="h-11 rounded-xl bg-gray-50"
                                     value={venue}
                                     onChange={(event) =>
@@ -201,11 +204,32 @@ export default function GameCreateDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="period" className="text-sm">
+                                <Label
+                                    htmlFor="edit-season"
+                                    className="text-sm"
+                                >
+                                    シーズン
+                                </Label>
+                                <Input
+                                    id="edit-season"
+                                    type="text"
+                                    className="h-11 rounded-xl bg-gray-50"
+                                    value={season}
+                                    onChange={(event) =>
+                                        setSeason(event.target.value)
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label
+                                    htmlFor="edit-period"
+                                    className="text-sm"
+                                >
                                     ピリオド時間
                                 </Label>
                                 <select
-                                    id="period"
+                                    id="edit-period"
                                     className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
                                     value={periodMinutes}
                                     onChange={(event) =>
@@ -233,7 +257,7 @@ export default function GameCreateDialog({
                                         setHasOvertime(event.target.checked)
                                     }
                                 />
-                                延長戦があった
+                                延長戦（OT/SO）あり
                             </label>
 
                             {errorMessage && (
@@ -242,25 +266,31 @@ export default function GameCreateDialog({
                                 </div>
                             )}
 
-                            <div className="flex justify-end gap-2 pt-2">
+                            <div className="flex flex-wrap justify-end gap-2 pt-2">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     className="h-9 rounded-lg border-gray-200"
-                                    onClick={() => {
-                                        setIsOpen(false);
-                                        resetForm();
-                                    }}
+                                    onClick={() => setIsOpen(false)}
                                 >
                                     キャンセル
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
-                                    onClick={handleSubmit}
+                                    variant="outline"
+                                    className="h-9 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                                    onClick={handleDelete}
                                     disabled={isSaving}
                                 >
-                                    {isSaving ? "作成中..." : "作成"}
+                                    削除
+                                </Button>
+                                <Button
+                                    type="button"
+                                    className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? "保存中..." : "保存する"}
                                 </Button>
                             </div>
                         </CardContent>

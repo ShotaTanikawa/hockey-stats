@@ -8,6 +8,7 @@ import type {
     GoalieStatWithPlayer,
     SkaterStatWithPlayer,
 } from "@/lib/types/stats";
+import GameMetaEditDialog from "./GameMetaEditDialog";
 import {
     getGameById,
     getGoalieStatsWithPlayersByGameId,
@@ -43,8 +44,9 @@ function formatGameDate(dateString: string) {
 export default async function GameDetailPage({
     params,
 }: {
-    params: { gameId: string };
+    params: Promise<{ gameId: string }>;
 }) {
+    const { gameId } = await params;
     const supabase = await createClient();
 
     const {
@@ -55,7 +57,7 @@ export default async function GameDetailPage({
         redirect("/login");
     }
 
-    const { data: game } = await getGameById(supabase, params.gameId);
+    const { data: game } = await getGameById(supabase, gameId);
 
     if (!game) {
         redirect("/dashboard/games");
@@ -109,13 +111,15 @@ export default async function GameDetailPage({
                             {formatGameDate(game.game_date)} vs {game.opponent}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                            {game.venue ?? "会場未設定"} ・ {game.period_minutes}
+                            {game.venue ?? "会場未設定"} ・{" "}
+                            {game.period_minutes}
                             min
                             {game.has_overtime ? " / OT" : ""}
                         </div>
                     </div>
                     {canEdit && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <GameMetaEditDialog game={game} canEdit={canEdit} />
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -143,17 +147,19 @@ export default async function GameDetailPage({
             <div className="grid gap-6">
                 <Card className="border-2 border-border">
                     <CardHeader className="border-b-2 border-border">
-                        <CardTitle className="text-base">
-                            Team Totals
-                        </CardTitle>
+                        <CardTitle className="text-base">Team Totals</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-4 py-6 text-sm sm:grid-cols-5">
                         <div>
-                            <div className="text-xs text-muted-foreground">G</div>
+                            <div className="text-xs text-muted-foreground">
+                                G
+                            </div>
                             <div className="font-semibold">{totals.goals}</div>
                         </div>
                         <div>
-                            <div className="text-xs text-muted-foreground">A</div>
+                            <div className="text-xs text-muted-foreground">
+                                A
+                            </div>
                             <div className="font-semibold">
                                 {totals.assists}
                             </div>
@@ -194,7 +200,7 @@ export default async function GameDetailPage({
                         </div>
                         <div className="mt-3 space-y-3">
                             {skaterRows.map((row) => {
-                                const player = row.players?.[0];
+                                const player = row.players;
                                 return (
                                     <div
                                         key={row.player_id}
@@ -229,7 +235,7 @@ export default async function GameDetailPage({
                         </div>
                         <div className="mt-3 space-y-3">
                             {goalieRows.map((row) => {
-                                const player = row.players?.[0];
+                                const player = row.players;
                                 return (
                                     <div
                                         key={row.player_id}
@@ -245,8 +251,9 @@ export default async function GameDetailPage({
                                             {row.shots_against === 0
                                                 ? "-"
                                                 : (
-                                                    row.saves / row.shots_against
-                                                ).toFixed(3)}
+                                                      row.saves /
+                                                      row.shots_against
+                                                  ).toFixed(3)}
                                         </div>
                                     </div>
                                 );
