@@ -32,7 +32,7 @@ export default function TeamMembersCard({
             setError(null);
             const response = await fetch(`/api/team-members/list?teamId=${teamId}`);
             const result = (await response.json()) as {
-                members?: MemberRow[];
+                members?: TeamMemberSummary[];
                 error?: string;
             };
 
