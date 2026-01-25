@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 // サーバー側で使うSupabaseクライアント（Cookie連携あり）
+// - Server Components / Route Handlers から使用
+// - Cookie同期によってログイン状態を維持する
 export async function createClient() {
     // リクエストに紐づくCookieストアを取得
     const cookieStore = await cookies();

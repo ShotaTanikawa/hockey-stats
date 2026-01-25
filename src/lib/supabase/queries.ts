@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types/stats";
 
 // SupabaseのDBアクセスを集約して、RLS前提の読み書きを統一する
+// - 画面側はこの関数群だけを使い、クエリの書き方を分散させない
 type TeamRow = Tables<"teams">;
 
 // チーム所属情報とチーム詳細をまとめて扱うための型
@@ -68,7 +69,8 @@ export async function getMemberWithTeam(
 }
 
 // チームに紐づく試合一覧を取得する
-// 一覧は日付降順で表示するため order を固定する
+// - 一覧は日付降順で表示するため order を固定する
+// - teamId 未指定の場合は全件となるため、呼び出し側で制御する
 export async function getGamesByTeam(
     supabase: SupabaseClient<Database>,
     teamId?: string | null
@@ -86,7 +88,7 @@ export async function getGamesByTeam(
 }
 
 // シーズンに紐づく試合ID一覧を取得する
-// シーズン通算集計の対象試合を先に確定させる用途
+// - シーズン通算集計の対象試合を先に確定させる用途
 export async function getGamesBySeason(
     supabase: SupabaseClient<Database>,
     teamId: string | null,
@@ -105,7 +107,7 @@ export async function getGamesBySeason(
 }
 
 // チームに紐づくシーズン一覧を取得する（games.season から抽出）
-// セレクトUIの候補として使う
+// - セレクトUIの候補として使う
 export async function getSeasonLabelsByTeam(
     supabase: SupabaseClient<Database>,
     teamId: string | null

@@ -10,6 +10,7 @@ import PlayerEditDialog from "./PlayerEditDialog";
 
 export const dynamic = "force-dynamic";
 
+// ポジションごとの色分け定義
 const positionStyle: Record<
     PlayerRow["position"],
     { border: string; bg: string; label: string }
@@ -61,6 +62,7 @@ export default async function DashboardPlayersPage() {
 
     return (
         <div className="mx-auto w-full max-w-4xl">
+            {/* staff のみ選手追加ボタンを表示 */}
             <div className="mb-6 flex items-center justify-between">
                 <div>
                     <div className="text-sm font-semibold">選手一覧</div>
@@ -71,6 +73,7 @@ export default async function DashboardPlayersPage() {
                 )}
             </div>
 
+            {/* ポジションの凡例 */}
             <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                     <span className="h-3 w-3 rounded-sm border-2 border-blue-500" />
@@ -90,6 +93,7 @@ export default async function DashboardPlayersPage() {
                 Active Players
             </div>
 
+            {/* PC幅のみテーブル風のヘッダー行を表示 */}
             <div className="mb-3 hidden items-center px-4 text-xs text-muted-foreground sm:grid sm:grid-cols-[100px_1fr_140px_140px_140px]">
                 <div>#</div>
                 <div>NAME</div>
@@ -124,6 +128,7 @@ export default async function DashboardPlayersPage() {
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-end gap-2">
+                                    {/* staff のみ編集アクションを表示 */}
                                     {isStaff && (
                                         <>
                                             <PlayerEditDialog
@@ -146,6 +151,7 @@ export default async function DashboardPlayersPage() {
                 })}
             </div>
 
+            {/* viewer 向けの注意書き */}
             {!isStaff && (
                 <Card className="mt-6 border-2 border-dashed border-border bg-muted/20">
                     <CardContent className="p-4 text-xs text-muted-foreground">

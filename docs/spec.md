@@ -93,6 +93,7 @@
 - `join_code` は自動生成し、作成直後に表示。
 - 以後は join_code で viewer 登録。
 - 1ユーザー = 1チーム所属（MVP）
+- チームは固定IDで運用し、シーズンは `games.season` で管理する。
 
 ---
 
@@ -101,7 +102,7 @@
 - `/login`：ログイン
 - `/signup`：2タブ構成
   - 参加：メール / パスワード / join_code
-  - チーム作成：メール / パスワード / チーム名 / シーズン
+  - チーム作成：メール / パスワード / チーム名 / シーズン（選択式）
 
 ### 5-2. ダッシュボード
 - `/dashboard`：チーム情報とクイック導線
@@ -125,6 +126,7 @@
 - `games`（team_id, season, game_date, opponent, venue, period_minutes, has_overtime）
 - `player_stats`（game_id, player_id, goals, assists, shots, blocks, pim）
 - `goalie_stats`（game_id, player_id, shots_against, saves, goals_against）
+※ 将来的にシーズンを厳密管理する場合は `seasons` テーブルを追加する。
 
 ---
 

@@ -35,6 +35,7 @@ export default async function GameLivePage({
         redirect("/login");
     }
 
+    // 試合が見つからない場合は一覧へ戻す
     const { data: game, error: gameError } = await getGameById(
         supabase,
         gameId
@@ -49,6 +50,7 @@ export default async function GameLivePage({
         redirect("/dashboard/games");
     }
 
+    // ロール確認（staff のみライブ入力可能）
     const { data: member } = await getMemberRoleByTeam(
         supabase,
         user.id,
@@ -68,6 +70,7 @@ export default async function GameLivePage({
         redirect(`/dashboard/games/${game.id}`);
     }
 
+    // ライブ入力に必要な選手と現在スタッツを取得
     const { data: skaters } = await getSkatersByTeam(supabase, game.team_id);
 
     const { data: goalies } = await getGoaliesByTeam(supabase, game.team_id);

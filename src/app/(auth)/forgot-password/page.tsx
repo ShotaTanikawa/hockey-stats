@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // リセットメール送信（Supabase標準機能）
-    // 成否はトーストでフィードバックする
+    // - 送信結果はトーストで通知する
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 

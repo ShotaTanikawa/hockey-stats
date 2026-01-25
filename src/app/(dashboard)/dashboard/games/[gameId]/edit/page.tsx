@@ -35,12 +35,14 @@ export default async function GameEditPage({
         redirect("/login");
     }
 
+    // 試合が見つからない場合は一覧へ戻す
     const { data: game } = await getGameById(supabase, gameId);
 
     if (!game) {
         redirect("/dashboard/games");
     }
 
+    // ロール確認（staff のみ編集可能）
     const { data: member } = await getMemberRoleByTeam(
         supabase,
         user.id,
@@ -49,6 +51,7 @@ export default async function GameEditPage({
 
     const canEdit = member?.role === "staff";
 
+    // 編集フォームに必要な選手と現在スタッツを取得
     const { data: skaters } = await getSkatersByTeam(supabase, game.team_id);
 
     const { data: goalies } = await getGoaliesByTeam(supabase, game.team_id);

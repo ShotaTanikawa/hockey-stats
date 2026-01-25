@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, BarChart } from "lucide-react";
 import { getMemberWithTeam } from "@/lib/supabase/queries";
+import TeamMembersCard from "./TeamMembersCard";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
     }
 
     // ログインユーザーの所属チームとロールを取得
+    // - TeamMembersCard の表示制御にも使用
     const { data: member } = await getMemberWithTeam(supabase, user.id);
 
     const team = member?.team ?? null;
@@ -28,9 +30,11 @@ export default async function DashboardPage() {
     const seasonLabel = team?.season_label ?? "-";
     const roleLabel = member?.role ?? "viewer";
     const isStaff = roleLabel === "staff";
+    const teamId = team?.id ?? null;
 
     return (
         <div className="mx-auto w-full max-w-2xl">
+            {/* 役割チップ付きのダッシュボード見出し */}
             <div className="mb-4 flex items-center gap-3">
                 <div className="text-lg font-semibold">Dashboard</div>
                 <span
@@ -83,6 +87,16 @@ export default async function DashboardPage() {
                 </CardContent>
             </Card>
 
+            {/* staff のみメンバー管理カードを表示 */}
+            {teamId && (
+                <TeamMembersCard
+                    teamId={teamId}
+                    currentUserId={user.id}
+                    canManage={isStaff}
+                />
+            )}
+
+            {/* よく使う画面への導線 */}
             <div className="mb-4 text-sm font-semibold">Quick Actions</div>
             <div className="space-y-4">
                 <Link href="/dashboard/games" className="block">

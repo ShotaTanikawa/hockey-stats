@@ -24,9 +24,11 @@ export default function DashboardShell({
     // 現在のパスでアクティブタブを判定する
     const pathname = usePathname();
     const router = useRouter();
+    // クライアント側でログアウトを実行する
     const supabase = createClient();
     const [menuOpen, setMenuOpen] = useState(false);
 
+    // ナビのアクティブ判定（サブページも含める）
     const isActive = (path: string) =>
         pathname === path || pathname.startsWith(`${path}/`);
 
@@ -42,6 +44,7 @@ export default function DashboardShell({
         <div className="min-h-svh bg-white">
             <header className="border-b-2 border-border bg-card">
                 <div className="mx-auto flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+                    {/* クリックでダッシュボードへ戻るタイトル */}
                     <Link
                         href="/dashboard"
                         className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -59,6 +62,7 @@ export default function DashboardShell({
                         </div>
                     </Link>
 
+                    {/* ユーザーメニュー（メール / ロール / ログアウト） */}
                     <div className="relative">
                         <Button
                             variant="outline"

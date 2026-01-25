@@ -32,6 +32,7 @@ export default function GameCreateDialog({
     seasonLabel,
 }: GameCreateDialogProps) {
     const router = useRouter();
+    // クライアント側の Supabase で games を追加する
     const supabase = useMemo(() => createClient(), []);
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function GameCreateDialog({
     }
 
     // 試合作成処理（バリデーションを含む）
-    // season はチームの既定ラベルを引き継ぐ
+    // - season はチームの既定ラベルを引き継ぐ
     async function handleSubmit() {
         setErrorMessage(null);
 
@@ -121,6 +122,7 @@ export default function GameCreateDialog({
             return;
         }
 
+        // モーダルを閉じてフォームを初期化
         setIsOpen(false);
         resetForm();
         toast({ title: "試合を作成しました" });
@@ -136,6 +138,7 @@ export default function GameCreateDialog({
 
     return (
         <>
+            {/* ダイアログを開くトリガーボタン */}
             <Button
                 className="h-10 rounded-xl bg-black px-4 text-white hover:bg-black/90"
                 onClick={() => setIsOpen(true)}
@@ -144,6 +147,7 @@ export default function GameCreateDialog({
                 ＋ 新規作成
             </Button>
 
+            {/* ダイアログは簡易モーダルで表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">

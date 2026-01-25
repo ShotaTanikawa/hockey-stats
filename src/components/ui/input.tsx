@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Inputの基本スタイルを統一するためのラッパー
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
     return (
         <input

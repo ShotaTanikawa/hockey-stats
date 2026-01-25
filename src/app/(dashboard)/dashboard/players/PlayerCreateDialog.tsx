@@ -22,6 +22,7 @@ export default function PlayerCreateDialog({
     role,
 }: PlayerCreateDialogProps) {
     const router = useRouter();
+    // クライアント側の Supabase で players を追加する
     const supabase = useMemo(() => createClient(), []);
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -42,7 +43,7 @@ export default function PlayerCreateDialog({
     }
 
     // 選手追加処理（バリデーションを含む）
-    // staff 権限のみ許可し、viewerはエラーにする
+    // - staff 権限のみ許可し、viewer はエラー表示
     async function handleSubmit() {
         setErrorMessage(null);
 
@@ -113,6 +114,7 @@ export default function PlayerCreateDialog({
             return;
         }
 
+        // モーダルを閉じて一覧を更新
         setIsOpen(false);
         resetForm();
         router.refresh();
@@ -121,6 +123,7 @@ export default function PlayerCreateDialog({
 
     return (
         <>
+            {/* ダイアログを開くトリガーボタン */}
             <Button
                 className="h-10 rounded-xl bg-black px-4 text-white hover:bg-black/90"
                 onClick={() => setIsOpen(true)}
@@ -129,6 +132,7 @@ export default function PlayerCreateDialog({
                 ＋ 選手追加
             </Button>
 
+            {/* 簡易モーダルで入力フォームを表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">

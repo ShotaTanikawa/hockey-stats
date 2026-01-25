@@ -19,7 +19,7 @@ type Props = {
 };
 
 // ヘッダーに表示するスタッツ定義のツールチップ
-// 見出しに「?」を付けて定義を短く表示する
+// - 見出しに「?」を付けて定義を短く表示する
 function StatHelp({
     label,
     description,
@@ -46,6 +46,7 @@ function StatHelp({
     );
 }
 
+// 小数をパーセント表記に変換する
 function formatPercent(value: number) {
     return `${(value * 100).toFixed(1)}%`;
 }
@@ -62,11 +63,13 @@ export default function SeasonStatsClient({
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    // 現在選択中のシーズンが一覧に無い場合も表示させる
     const seasonOptions = useMemo(() => {
         const list = seasons.length > 0 ? seasons : [seasonLabel];
         return Array.from(new Set([seasonLabel, ...list]));
     }, [seasonLabel, seasons]);
 
+    // クエリパラメータで season を切り替える
     function handleSeasonChange(nextSeason: string) {
         const params = new URLSearchParams(searchParams?.toString());
         params.set("season", nextSeason);
@@ -75,30 +78,43 @@ export default function SeasonStatsClient({
 
     return (
         <div className="mx-auto w-full max-w-5xl">
+            {/* 右側に用語集リンクとシーズン選択 */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <div className="text-sm font-semibold">シーズン通算</div>
                     <div className="mt-1 h-0.5 w-12 rounded-full bg-gray-900" />
                 </div>
-                <select
-                    className="h-9 rounded-lg border-2 border-border bg-white px-3 text-xs text-muted-foreground"
-                    value={seasonLabel}
-                    onChange={(event) => handleSeasonChange(event.target.value)}
-                >
-                    {seasonOptions.map((season) => (
-                        <option key={season} value={season}>
-                            {season}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex items-center gap-2">
+                    <a
+                        href="/dashboard/stats/glossary"
+                        className="rounded-lg border-2 border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted/40"
+                    >
+                        用語集
+                    </a>
+                    <select
+                        className="h-9 rounded-lg border-2 border-border bg-white px-3 text-xs text-muted-foreground"
+                        value={seasonLabel}
+                        onChange={(event) =>
+                            handleSeasonChange(event.target.value)
+                        }
+                    >
+                        {seasonOptions.map((season) => (
+                            <option key={season} value={season}>
+                                {season}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
+            {/* 集計対象のシーズンを明示する */}
             <Card className="mb-6 border-2 border-dashed border-border bg-muted/20">
                 <CardContent className="p-4 text-xs text-muted-foreground">
                     ℹ {seasonLabel} の全試合スタッツを集計しています
                 </CardContent>
             </Card>
 
+            {/* Skaters / Goalies のタブ切替 */}
             <Tabs defaultValue="skaters">
                 <TabsList>
                     <TabsTrigger value="skaters">Skaters</TabsTrigger>

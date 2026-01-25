@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 export default function LoginPage() {
     const router = useRouter();
     // ブラウザ側で利用するSupabaseクライアント
+    // - Authのサインイン/セッション管理に使う
     const supabase = createClient();
 
     const [email, setEmail] = useState("");
@@ -32,6 +33,7 @@ export default function LoginPage() {
         setLoading(true);
 
         // Supabaseのメール/パスワード認証
+        // - エラーは画面内に表示して再入力を促す
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -46,6 +48,7 @@ export default function LoginPage() {
         }
 
         // 認証成功後は保護ページへ遷移
+        // - Server Componentの再評価のためrefreshも実行
         router.push("/dashboard");
         router.refresh();
     }

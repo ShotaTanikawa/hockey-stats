@@ -5,6 +5,7 @@ import * as LabelPrimitive from "@radix-ui/react-label";
 
 import { cn } from "@/lib/utils";
 
+// Radix Label をプロジェクトの見た目に合わせてラップする
 function Label({
     className,
     ...props

@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: Props) {
     }
 
     // チーム情報とロールを取得して共通ヘッダーに渡す
-    // UI側の権限表示とメニューの状態管理に使用
+    // - ヘッダー内の表示名/ロールチップ/ログアウトメニューに利用
     const { data: member } = await getMemberWithTeam(supabase, user.id);
     // team_members.team_id は1ユーザー1チーム前提
     const team = member?.team ?? null;

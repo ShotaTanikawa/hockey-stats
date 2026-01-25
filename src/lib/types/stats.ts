@@ -1,3 +1,5 @@
+// games テーブルの表示用データ
+// - team_id/season は画面によって省略されるため optional
 export type GameRow = {
     id: string;
     game_date: string;
@@ -9,6 +11,7 @@ export type GameRow = {
     season?: string;
 };
 
+// スケーター基本情報（GK以外）
 export type Skater = {
     id: string;
     name: string;
@@ -16,12 +19,14 @@ export type Skater = {
     position: "F" | "D";
 };
 
+// ゴーリー基本情報
 export type Goalie = {
     id: string;
     name: string;
     number: number;
 };
 
+// players テーブル行（ロースター表示用）
 export type PlayerRow = {
     id: string;
     name: string;
@@ -30,6 +35,7 @@ export type PlayerRow = {
     is_active: boolean;
 };
 
+// スケーターの試合スタッツ（生値）
 export type SkaterStat = {
     goals: number;
     assists: number;
@@ -38,22 +44,26 @@ export type SkaterStat = {
     pim: number;
 };
 
+// ゴーリーの試合スタッツ（生値）
 export type GoalieStat = {
     shots_against: number;
     saves: number;
     goals_against: number;
 };
 
+// player_stats の1行（選手ID付き）
 export type SkaterStatRow = SkaterStat & {
     player_id: string;
     game_id?: string;
 };
 
+// goalie_stats の1行（選手ID付き）
 export type GoalieStatRow = GoalieStat & {
     player_id: string;
     game_id?: string;
 };
 
+// 試合詳細表示用（選手情報JOIN済み）
 export type SkaterStatWithPlayer = SkaterStatRow & {
     players: {
         name: string;
@@ -62,6 +72,7 @@ export type SkaterStatWithPlayer = SkaterStatRow & {
     } | null;
 };
 
+// 試合詳細表示用（ゴーリー情報JOIN済み）
 export type GoalieStatWithPlayer = GoalieStatRow & {
     players: {
         name: string;
@@ -69,11 +80,13 @@ export type GoalieStatWithPlayer = GoalieStatRow & {
     } | null;
 };
 
+// シーズン通算のスケーター集計
 export type SkaterSummaryRow = Skater &
     SkaterStat & {
         gp: number;
     };
 
+// シーズン通算のゴーリー集計
 export type GoalieSummaryRow = Goalie &
     GoalieStat & {
         gp: number;

@@ -24,6 +24,7 @@ export default function PlayerEditDialog({
     player,
 }: PlayerEditDialogProps) {
     const router = useRouter();
+    // クライアント側の Supabase で players を更新する
     const supabase = useMemo(() => createClient(), []);
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function PlayerEditDialog({
     }
 
     // 選手情報を更新する
-    // is_active を切り替えて除籍/復帰を表現する
+    // - is_active を切り替えて除籍/復帰を表現する
     async function handleSubmit() {
         setErrorMessage(null);
 
@@ -108,6 +109,7 @@ export default function PlayerEditDialog({
             return;
         }
 
+        // モーダルを閉じて一覧を更新
         setIsOpen(false);
         resetForm();
         router.refresh();
@@ -116,6 +118,7 @@ export default function PlayerEditDialog({
 
     return (
         <>
+            {/* 編集ダイアログを開くボタン */}
             <Button
                 variant="outline"
                 size="icon"
@@ -126,6 +129,7 @@ export default function PlayerEditDialog({
                 <Pencil className="h-4 w-4" />
             </Button>
 
+            {/* 簡易モーダルで編集フォームを表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">

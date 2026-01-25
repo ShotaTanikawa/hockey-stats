@@ -20,6 +20,7 @@ type PeriodMinutes = (typeof PERIOD_MINUTES_OPTIONS)[number];
 
 export default function GameMetaEditDialog({ game, canEdit }: Props) {
     const router = useRouter();
+    // クライアント側の Supabase で games を更新/削除する
     const supabase = createClient();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    // モーダルを開いたときに最新のゲーム情報を反映
     useEffect(() => {
         if (!isOpen) return;
         setGameDate(game.game_date);
@@ -45,6 +47,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
         setErrorMessage(null);
     }, [isOpen, game]);
 
+    // メタ情報の更新
     async function handleSave() {
         if (!canEdit) return;
         setErrorMessage(null);
@@ -97,11 +100,13 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
             return;
         }
 
+        // モーダルを閉じて一覧を最新化
         setIsOpen(false);
         toast({ title: "試合情報を更新しました" });
         router.refresh();
     }
 
+    // 試合削除（関連スタッツも消えるため確認あり）
     async function handleDelete() {
         if (!canEdit) return;
         const confirmed = window.confirm(
@@ -133,6 +138,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
 
     return (
         <>
+            {/* 試合メタ情報編集ボタン */}
             <Button
                 variant="outline"
                 size="sm"
@@ -143,6 +149,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                 試合編集
             </Button>
 
+            {/* 簡易モーダルで編集フォームを表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">

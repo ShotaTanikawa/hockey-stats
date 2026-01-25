@@ -3,13 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+// 昇格対象の teamId / userId を検証する
 const promoteSchema = z.object({
     teamId: z.string().uuid(),
     userId: z.string().uuid(),
 });
 
 // staff が viewer を staff に昇格させる Route Handler
-// 実際の更新は service role で行い、RLS を迂回して実行する
+// - 実際の更新は service role で行い、RLS を迂回して実行する
 export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     const parsed = promoteSchema.safeParse(body);
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
         );
     }
 
+    // 通常クライアントでログイン状態と権限を確認
     const supabase = await createClient();
     const {
         data: { user },
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
 
     const { teamId, userId } = parsed.data;
 
+    // リクエストユーザーが staff であることを確認
     const { data: member } = await supabase
         .from("team_members")
         .select("role")
@@ -60,6 +63,7 @@ export async function POST(request: Request) {
         );
     }
 
+    // service role で役割を更新
     const admin = createAdminClient(supabaseUrl, serviceRoleKey);
 
     const { error } = await admin

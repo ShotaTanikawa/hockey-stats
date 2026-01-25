@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+// join_code でのサインアップ入力を検証する
 const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
@@ -11,6 +12,7 @@ const signupSchema = z.object({
 type SignupPayload = z.infer<typeof signupSchema>;
 
 // join_code を使ったサインアップを実行する
+// - service role で Auth ユーザー作成と team_members 登録を行う
 export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     const parsed = signupSchema.safeParse(body);
@@ -33,8 +35,10 @@ export async function POST(request: Request) {
         );
     }
 
+    // RLS を迂回できる管理クライアント
     const admin = createClient(supabaseUrl, serviceRoleKey);
 
+    // join_code に紐づくチームを確認
     const { data: team, error: teamError } = await admin
         .from("teams")
         .select("id")
@@ -55,6 +59,7 @@ export async function POST(request: Request) {
         );
     }
 
+    // Auth ユーザーを作成（メール確認は即時完了）
     const { data: userData, error: userError } =
         await admin.auth.admin.createUser({
             email,
@@ -69,6 +74,7 @@ export async function POST(request: Request) {
         );
     }
 
+    // 新規ユーザーを viewer として紐づける
     const { error: memberError } = await admin.from("team_members").insert({
         team_id: team.id,
         user_id: userData.user.id,
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
     });
 
     if (memberError) {
+        // 途中失敗時は作成済みユーザーをロールバック
         await admin.auth.admin.deleteUser(userData.user.id);
         return NextResponse.json(
             { error: "チームへの登録に失敗しました。" },

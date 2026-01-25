@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import type {
     Goalie,
     GoalieStat,
@@ -13,6 +12,9 @@ import type {
     SkaterStatRow,
 } from "@/lib/types/stats";
 import { useToast } from "@/hooks/use-toast";
+import LiveSkatersCard from "./LiveSkatersCard";
+import LiveGoaliesCard from "./LiveGoaliesCard";
+import LiveEventLogCard from "./LiveEventLogCard";
 
 type Props = {
     gameId: string;
@@ -47,6 +49,7 @@ export default function LiveClient({
     skaterStats,
     goalieStats,
 }: Props) {
+    // クライアント側でリアルタイム入力を反映する
     const supabase = createClient();
     const { toast } = useToast();
     const [error, setError] = useState<string | null>(null);
@@ -99,10 +102,12 @@ export default function LiveClient({
         setGoalieState(initialGoalieState);
     }, [initialGoalieState]);
 
+    // 直近のイベントを先頭に積む
     function pushLog(message: string) {
         setLog((prev) => [message, ...prev].slice(0, 6));
     }
 
+    // プレイヤーID→表示名のマップを作る
     const playerLabelMap = useMemo(() => {
         const map: Record<string, string> = {};
         skaters.forEach((player) => {
@@ -114,10 +119,12 @@ export default function LiveClient({
         return map;
     }, [skaters, goalies]);
 
+    // ログ用に分かりやすい表示名を返す
     function getPlayerLabel(playerId: string) {
         return playerLabelMap[playerId] ?? `#${playerId}`;
     }
 
+    // スケーターの操作内容を短いラベルに変換
     function formatSkaterLog(field: keyof SkaterStat) {
         switch (field) {
             case "goals":
@@ -223,12 +230,14 @@ export default function LiveClient({
                 <div className="text-xs text-gray-500">vs {opponent}</div>
             </div>
 
+            {/* viewer 向けの説明 */}
             {!canEdit && (
                 <div className="mb-6 rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-500">
                     viewer 権限のため編集できません
                 </div>
             )}
 
+            {/* 保存エラーを表示 */}
             {error && (
                 <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
                     {error}
@@ -237,190 +246,24 @@ export default function LiveClient({
 
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
                 <div className="space-y-6">
-                    <Card className="border-gray-200">
-                        <CardHeader className="border-b border-gray-200">
-                            <CardTitle className="text-base">Skaters</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="space-y-4">
-                                {skaters.map((player) => {
-                                    const stat =
-                                        skaterState[player.id] ?? EMPTY_SKATER;
-                                    return (
-                                        <div
-                                            key={player.id}
-                                            className="flex flex-col gap-3 rounded-lg border border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                                        >
-                                            <div className="text-sm font-semibold text-gray-700">
-                                                #{player.number} {player.name}
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                                                <span>G {stat.goals}</span>
-                                                <span>A {stat.assists}</span>
-                                                <span>S {stat.shots}</span>
-                                                <span>BLK {stat.blocks}</span>
-                                                <span>PIM {stat.pim}</span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateSkater(
-                                                            player.id,
-                                                            "goals"
-                                                        )
-                                                    }
-                                                >
-                                                    G＋
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateSkater(
-                                                            player.id,
-                                                            "assists"
-                                                        )
-                                                    }
-                                                >
-                                                    A＋
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateSkater(
-                                                            player.id,
-                                                            "shots"
-                                                        )
-                                                    }
-                                                >
-                                                    SOG＋
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateSkater(
-                                                            player.id,
-                                                            "blocks"
-                                                        )
-                                                    }
-                                                >
-                                                    BLK＋
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateSkater(
-                                                            player.id,
-                                                            "pim"
-                                                        )
-                                                    }
-                                                >
-                                                    PIM＋
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <LiveSkatersCard
+                        skaters={skaters}
+                        skaterState={skaterState}
+                        emptySkater={EMPTY_SKATER}
+                        canEdit={canEdit}
+                        onIncrement={updateSkater}
+                    />
 
-                    <Card className="border-gray-200">
-                        <CardHeader className="border-b border-gray-200">
-                            <CardTitle className="text-base">Goalies</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="space-y-4">
-                                {goalies.map((player) => {
-                                    const stat =
-                                        goalieState[player.id] ?? EMPTY_GOALIE;
-                                    return (
-                                        <div
-                                            key={player.id}
-                                            className="flex flex-col gap-3 rounded-lg border border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                                        >
-                                            <div className="text-sm font-semibold text-gray-700">
-                                                #{player.number} {player.name}
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                                                <span>
-                                                    SA {stat.shots_against}
-                                                </span>
-                                                <span>
-                                                    GA {stat.goals_against}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateGoalie(
-                                                            player.id,
-                                                            "shots_against"
-                                                        )
-                                                    }
-                                                >
-                                                    SA＋
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 rounded-lg px-2"
-                                                    disabled={!canEdit}
-                                                    onClick={() =>
-                                                        updateGoalie(
-                                                            player.id,
-                                                            "goals_against"
-                                                        )
-                                                    }
-                                                >
-                                                    GA＋
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <LiveGoaliesCard
+                        goalies={goalies}
+                        goalieState={goalieState}
+                        emptyGoalie={EMPTY_GOALIE}
+                        canEdit={canEdit}
+                        onIncrement={updateGoalie}
+                    />
                 </div>
 
-                <Card className="border-gray-200">
-                    <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-base">Event Log</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        {log.length === 0 ? (
-                            <div className="text-xs text-gray-500">
-                                直近の操作が表示されます
-                            </div>
-                        ) : (
-                            <div className="space-y-2 text-xs text-gray-600">
-                                {log.map((item, index) => (
-                                    <div key={`${item}-${index}`}>{item}</div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                <LiveEventLogCard log={log} />
             </div>
         </div>
     );

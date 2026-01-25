@@ -2,14 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type {
     Goalie,
     GoalieStat,
@@ -19,6 +13,8 @@ import type {
     SkaterStatRow,
 } from "@/lib/types/stats";
 import { useToast } from "@/hooks/use-toast";
+import EditSkatersCard from "./EditSkatersCard";
+import EditGoaliesCard from "./EditGoaliesCard";
 
 type Props = {
     gameId: string;
@@ -44,33 +40,6 @@ const EMPTY_GOALIE: GoalieStat = {
     goals_against: 0,
 };
 
-// テーブル見出しにスタッツ定義を表示するツールチップ
-function StatHelp({
-    label,
-    description,
-}: {
-    label: string;
-    description: string;
-}) {
-    return (
-        <span className="inline-flex items-center gap-1">
-            {label}
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        type="button"
-                        className="grid h-4 w-4 place-items-center rounded-full border border-border text-[10px] text-muted-foreground"
-                        aria-label={`${label} の定義`}
-                    >
-                        ?
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent>{description}</TooltipContent>
-            </Tooltip>
-        </span>
-    );
-}
-
 // フォーム入力を安全な整数に丸める（負数は0扱い）
 function toNumber(value: string) {
     const parsed = Number(value);
@@ -87,11 +56,13 @@ export default function EditClient({
     skaterStats,
     goalieStats,
 }: Props) {
+    // クライアント側で試合後の最終スタッツを保存する
     const supabase = createClient();
     const { toast } = useToast();
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
+    // 既存スタッツを初期状態に落とし込む（未登録は0で埋める）
     const initialSkaterState = useMemo(() => {
         const map: Record<string, SkaterStat> = {};
         skaters.forEach((player) => {
@@ -109,6 +80,7 @@ export default function EditClient({
         return map;
     }, [skaters, skaterStats]);
 
+    // ゴーリーも同様に初期状態を作る
     const initialGoalieState = useMemo(() => {
         const map: Record<string, GoalieStat> = {};
         goalies.forEach((player) => {
@@ -143,6 +115,7 @@ export default function EditClient({
         setError(null);
         setSaving(true);
 
+        // スケーター / ゴーリーそれぞれの payload を作る
         const skaterPayload = skaters.map((player) => ({
             game_id: gameId,
             player_id: player.id,
@@ -191,6 +164,43 @@ export default function EditClient({
         toast({ title: "スタッツを保存しました" });
     }
 
+    // 数値入力を state に反映（負数は0に丸める）
+    function handleSkaterChange(
+        playerId: string,
+        field: keyof SkaterStat,
+        value: string
+    ) {
+        const nextValue = toNumber(value);
+        setSkaterState((prev) => {
+            const current = prev[playerId] ?? EMPTY_SKATER;
+            return {
+                ...prev,
+                [playerId]: {
+                    ...current,
+                    [field]: nextValue,
+                },
+            };
+        });
+    }
+
+    function handleGoalieChange(
+        playerId: string,
+        field: "shots_against" | "saves" | "goals_against",
+        value: string
+    ) {
+        const nextValue = toNumber(value);
+        setGoalieState((prev) => {
+            const current = prev[playerId] ?? EMPTY_GOALIE;
+            return {
+                ...prev,
+                [playerId]: {
+                    ...current,
+                    [field]: nextValue,
+                },
+            };
+        });
+    }
+
     return (
         <div className="mx-auto w-full max-w-5xl px-6 py-8">
             <div className="mb-6 flex items-center justify-between">
@@ -209,12 +219,14 @@ export default function EditClient({
                 )}
             </div>
 
+            {/* viewer 向けの説明 */}
             {!canEdit && (
                 <div className="mb-6 rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-500">
                     viewer 権限のため編集できません
                 </div>
             )}
 
+            {/* 保存エラーを表示 */}
             {error && (
                 <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
                     {error}
@@ -222,243 +234,20 @@ export default function EditClient({
             )}
 
             <div className="grid gap-6">
-                <Card className="border-gray-200">
-                    <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-base">Skaters</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]">
-                            <div>Name</div>
-                            <div>
-                                <StatHelp
-                                    label="G"
-                                    description="Goals（ゴール数）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="A"
-                                    description="Assists（アシスト数）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="SOG"
-                                    description="Shots on Goal（枠内シュート数）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="BLK"
-                                    description="Blocked Shots（ブロックショット数）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="PIM"
-                                    description="Penalty Minutes（ペナルティ合計分）"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-3 space-y-3">
-                            {skaters.map((player) => {
-                                const stat =
-                                    skaterState[player.id] ?? EMPTY_SKATER;
-                                return (
-                                    <div
-                                        key={player.id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]"
-                                    >
-                                        <div className="font-semibold text-gray-700">
-                                            #{player.number} {player.name}
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.goals}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setSkaterState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        goals: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.assists}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setSkaterState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        assists: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.shots}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setSkaterState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        shots: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.blocks}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setSkaterState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        blocks: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.pim}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setSkaterState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        pim: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-gray-200">
-                    <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-base">Goalies</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <div className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-xs text-gray-500 sm:grid-cols-[140px_1fr_1fr_1fr]">
-                            <div>Name</div>
-                            <div>
-                                <StatHelp
-                                    label="SA"
-                                    description="Shots Against（被シュート数）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="Saves"
-                                    description="セーブ数（試合後に確定）"
-                                />
-                            </div>
-                            <div>
-                                <StatHelp
-                                    label="GA"
-                                    description="Goals Against（失点数）"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-3 space-y-3">
-                            {goalies.map((player) => {
-                                const stat =
-                                    goalieState[player.id] ?? EMPTY_GOALIE;
-                                return (
-                                    <div
-                                        key={player.id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr]"
-                                    >
-                                        <div className="font-semibold text-gray-700">
-                                            #{player.number} {player.name}
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.shots_against}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setGoalieState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        shots_against: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.saves}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setGoalieState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        saves: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            value={stat.goals_against}
-                                            disabled={!canEdit}
-                                            onChange={(e) =>
-                                                setGoalieState((prev) => ({
-                                                    ...prev,
-                                                    [player.id]: {
-                                                        ...stat,
-                                                        goals_against: toNumber(
-                                                            e.target.value
-                                                        ),
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
+                <EditSkatersCard
+                    skaters={skaters}
+                    skaterState={skaterState}
+                    emptySkater={EMPTY_SKATER}
+                    canEdit={canEdit}
+                    onChange={handleSkaterChange}
+                />
+                <EditGoaliesCard
+                    goalies={goalies}
+                    goalieState={goalieState}
+                    emptyGoalie={EMPTY_GOALIE}
+                    canEdit={canEdit}
+                    onChange={handleGoalieChange}
+                />
             </div>
         </div>
     );

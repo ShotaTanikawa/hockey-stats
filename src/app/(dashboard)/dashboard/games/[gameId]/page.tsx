@@ -18,6 +18,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// 日本語表記（「1月1日(火)」）で日付を整形する
 function formatGameDate(dateString: string) {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) {
@@ -57,12 +58,14 @@ export default async function GameDetailPage({
         redirect("/login");
     }
 
+    // 試合情報が取得できない場合は一覧へ戻す
     const { data: game } = await getGameById(supabase, gameId);
 
     if (!game) {
         redirect("/dashboard/games");
     }
 
+    // 試合単位のスタッツを取得（選手情報を含む）
     const { data: skaterStats } = await getSkaterStatsWithPlayersByGameId(
         supabase,
         game.id
@@ -84,6 +87,7 @@ export default async function GameDetailPage({
     const skaterRows = (skaterStats ?? []) as SkaterStatWithPlayer[];
     const goalieRows = (goalieStats ?? []) as GoalieStatWithPlayer[];
 
+    // チーム合計を算出（スケーター分のみ）
     const totals = skaterRows.reduce(
         (acc, row) => ({
             goals: acc.goals + row.goals,
@@ -117,6 +121,7 @@ export default async function GameDetailPage({
                             {game.has_overtime ? " / OT" : ""}
                         </div>
                     </div>
+                    {/* staff のみ編集 / ライブ導線を表示 */}
                     {canEdit && (
                         <div className="flex flex-wrap items-center gap-2">
                             <GameMetaEditDialog game={game} canEdit={canEdit} />

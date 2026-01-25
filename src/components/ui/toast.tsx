@@ -41,6 +41,7 @@ const toastVariants = cva(
     }
 );
 
+// トースト本体（見た目 + variant）
 const Toast = React.forwardRef<
     React.ElementRef<typeof ToastPrimitives.Root>,
     React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
@@ -54,6 +55,7 @@ const Toast = React.forwardRef<
 ));
 Toast.displayName = ToastPrimitives.Root.displayName;
 
+// トースト内のアクションボタン
 const ToastAction = React.forwardRef<
     React.ElementRef<typeof ToastPrimitives.Action>,
     React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
@@ -69,6 +71,7 @@ const ToastAction = React.forwardRef<
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
 
+// トーストの閉じるボタン
 const ToastClose = React.forwardRef<
     React.ElementRef<typeof ToastPrimitives.Close>,
     React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
@@ -87,6 +90,7 @@ const ToastClose = React.forwardRef<
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
 
+// タイトル用テキスト
 const ToastTitle = React.forwardRef<
     React.ElementRef<typeof ToastPrimitives.Title>,
     React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
@@ -99,6 +103,7 @@ const ToastTitle = React.forwardRef<
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
+// 説明文用テキスト
 const ToastDescription = React.forwardRef<
     React.ElementRef<typeof ToastPrimitives.Description>,
     React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>

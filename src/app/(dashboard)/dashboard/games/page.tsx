@@ -9,6 +9,7 @@ import GameCreateDialog from "./GameCreateDialog";
 
 export const dynamic = "force-dynamic";
 
+// 日本語表記（「1月1日(火)」）で日付を整形する
 function formatGameDate(dateString: string) {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) {
@@ -59,6 +60,7 @@ export default async function DashboardGamesPage() {
 
     return (
         <div className="mx-auto w-full max-w-4xl">
+            {/* staff のみ作成ボタンを表示 */}
             <div className="mb-6 flex items-center justify-between">
                 <div>
                     <div className="text-sm font-semibold">試合一覧</div>
@@ -72,6 +74,7 @@ export default async function DashboardGamesPage() {
                 )}
             </div>
 
+            {/* PC幅のみテーブル風のヘッダー行を表示 */}
             <div className="mb-3 hidden items-center px-4 text-xs text-muted-foreground sm:grid sm:grid-cols-[120px_1fr_160px_160px_180px]">
                 <div>DATE</div>
                 <div>OPPONENT</div>
@@ -114,6 +117,7 @@ export default async function DashboardGamesPage() {
                                         詳細
                                     </Link>
                                 </Button>
+                                {/* ライブ入力は staff のみ */}
                                 {isStaff && (
                                     <Button
                                         size="sm"
@@ -133,6 +137,7 @@ export default async function DashboardGamesPage() {
                 ))}
             </div>
 
+            {/* viewer 向けの注意書き */}
             {!isStaff && (
                 <Card className="mt-6 border-2 border-dashed border-border bg-muted/20">
                     <CardContent className="p-4 text-xs text-muted-foreground">

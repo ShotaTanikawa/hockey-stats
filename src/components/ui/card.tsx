@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Cardの各スロット（Header/Content/Footerなど）を共通化する
 function Card({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -15,6 +16,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// Cardの見出し部分
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -28,6 +30,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// タイトル表記の見た目を統一
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -38,6 +41,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// タイトル下の説明文エリア
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -48,6 +52,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// Header内の右上アクション用エリア
 function CardAction({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -61,6 +66,7 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// 本文コンテンツの共通ラッパー
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -71,6 +77,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
+// フッター領域（ボタンなど）
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div

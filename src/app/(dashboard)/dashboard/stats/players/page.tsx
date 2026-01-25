@@ -15,7 +15,7 @@ import SeasonStatsClient from "./SeasonStatsClient";
 export const dynamic = "force-dynamic";
 
 // シーズン集計のデータ取得はサーバー側で行う
-// RLSが効いた状態でteam/seasonに紐づく統計を集約する
+// - RLSが効いた状態でteam/seasonに紐づく統計を集約する
 export default async function DashboardStatsPlayersPage({
     searchParams,
 }: {
@@ -48,8 +48,8 @@ export default async function DashboardStatsPlayersPage({
 
     const gameIds = (games ?? []).map((game) => game.id);
 
+    // チーム内のスケーター / ゴーリーを取得
     const { data: skaters } = await getSkatersByTeam(supabase, teamId);
-
     const { data: goalies } = await getGoaliesByTeam(supabase, teamId);
 
     const { data: skaterStats } = await getSkaterStatsByGameIds(
