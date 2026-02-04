@@ -2,8 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Calendar, BarChart } from "lucide-react";
-import { getMemberWithTeam } from "@/lib/supabase/queries";
+import {
+    getMemberWithTeam,
+    getUnloggedGameCountByTeam,
+} from "@/lib/supabase/queries";
 import TeamMembersCard from "./TeamMembersCard";
 
 export const dynamic = "force-dynamic";
@@ -32,25 +36,36 @@ export default async function DashboardPage() {
     const isStaff = roleLabel === "staff";
     const teamId = team?.id ?? null;
 
+    const { data: unloggedGameCount } = await getUnloggedGameCountByTeam(
+        supabase,
+        teamId
+    );
+
     return (
-        <div className="mx-auto w-full max-w-2xl">
+        <div className="mx-auto w-full max-w-4xl">
             {/* 役割チップ付きのダッシュボード見出し */}
-            <div className="mb-4 flex items-center gap-3">
-                <div className="text-lg font-semibold">Dashboard</div>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="font-display">Dashboard</span>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                        チーム運用の全体状況をまとめて確認できます
+                    </div>
+                </div>
                 <span
-                    className={`rounded-full border-2 px-2 py-0.5 text-xs font-semibold ${
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${
                         isStaff
-                            ? "bg-foreground text-background"
-                            : "bg-muted text-foreground"
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border bg-muted text-foreground"
                     }`}
                 >
                     {roleLabel.toUpperCase()}
                 </span>
             </div>
-            <div className="mb-8 h-1 w-16 bg-foreground" />
 
-            <Card className="mb-8 border-2 border-border">
-                <CardHeader className="border-b-2 border-border">
+            <Card className="mb-8 border border-border/60">
+                <CardHeader className="border-b border-border/60">
                     <CardTitle className="text-base">
                         Team Information
                     </CardTitle>
@@ -96,13 +111,41 @@ export default async function DashboardPage() {
                 />
             )}
 
+            <Card className="mb-8 border border-border/60">
+                <CardHeader className="border-b border-border/60">
+                    <CardTitle className="text-base">
+                        Operational Snapshot
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div className="text-xs text-muted-foreground">
+                            入力未開始の試合数
+                        </div>
+                        <div className="mt-2 text-3xl font-semibold tracking-tight">
+                            {unloggedGameCount}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                            スタッツが未記録の試合をカウントしています
+                        </div>
+                    </div>
+                    <Button
+                        variant="outline"
+                        className="h-10 rounded-xl border border-border/70"
+                        asChild
+                    >
+                        <Link href="/dashboard/games">試合一覧へ</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+
             {/* よく使う画面への導線 */}
             <div className="mb-4 text-sm font-semibold">Quick Actions</div>
             <div className="space-y-4">
                 <Link href="/dashboard/games" className="block">
-                    <Card className="border-2 border-border transition hover:bg-muted/50">
+                    <Card className="border border-border/60 transition hover:bg-muted/40">
                         <CardContent className="flex items-center gap-4 py-5">
-                            <div className="grid h-12 w-12 place-items-center rounded-lg border-2 border-foreground bg-white">
+                            <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border/70 bg-white/80">
                                 <Calendar />
                             </div>
                             <div className="flex-1">
@@ -119,9 +162,9 @@ export default async function DashboardPage() {
                 </Link>
 
                 <Link href="/dashboard/players" className="block">
-                    <Card className="border-2 border-border transition hover:bg-muted/50">
+                    <Card className="border border-border/60 transition hover:bg-muted/40">
                         <CardContent className="flex items-center gap-4 py-5">
-                            <div className="grid h-12 w-12 place-items-center rounded-lg border-2 border-foreground bg-white">
+                            <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border/70 bg-white/80">
                                 👤
                             </div>
                             <div className="flex-1">
@@ -138,9 +181,9 @@ export default async function DashboardPage() {
                 </Link>
 
                 <Link href="/dashboard/stats/players" className="block">
-                    <Card className="border-2 border-border transition hover:bg-muted/50">
+                    <Card className="border border-border/60 transition hover:bg-muted/40">
                         <CardContent className="flex items-center gap-4 py-5">
-                            <div className="grid h-12 w-12 place-items-center rounded-lg border-2 border-foreground bg-white">
+                            <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border/70 bg-white/80">
                                 <BarChart />
                             </div>
                             <div className="flex-1">
@@ -157,7 +200,7 @@ export default async function DashboardPage() {
                 </Link>
             </div>
 
-            <Card className="mt-6 border-2 border-dashed border-border bg-muted/20">
+            <Card className="mt-6 border border-dashed border-border/70 bg-muted/20">
                 <CardContent className="flex gap-2 p-4 text-xs text-muted-foreground">
                     <div className="w-1 bg-muted-foreground/30" />
                     <div>

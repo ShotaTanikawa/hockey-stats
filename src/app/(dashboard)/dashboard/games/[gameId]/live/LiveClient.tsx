@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import type {
     Goalie,
     GoalieStat,
@@ -224,22 +223,26 @@ export default function LiveClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-5xl px-6 py-8">
+        <div className="mx-auto w-full max-w-6xl px-6 py-8">
             <div className="mb-6">
-                <div className="text-sm font-semibold">ライブ入力</div>
-                <div className="text-xs text-gray-500">vs {opponent}</div>
+                <div className="text-lg font-semibold tracking-tight">
+                    <span className="font-display">ライブ入力</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                    vs {opponent}
+                </div>
             </div>
 
             {/* viewer 向けの説明 */}
             {!canEdit && (
-                <div className="mb-6 rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-500">
+                <div className="mb-6 rounded-2xl border border-dashed border-border/70 px-4 py-3 text-xs text-muted-foreground">
                     viewer 権限のため編集できません
                 </div>
             )}
 
             {/* 保存エラーを表示 */}
             {error && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
+                <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
                     {error}
                 </div>
             )}

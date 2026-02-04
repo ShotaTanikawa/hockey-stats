@@ -104,7 +104,7 @@ export default function GameCreateDialog({
             season: seasonLabel ?? null,
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from("games")
             .insert(payload)
             .select("id")
@@ -140,7 +140,7 @@ export default function GameCreateDialog({
         <>
             {/* ダイアログを開くトリガーボタン */}
             <Button
-                className="h-10 rounded-xl bg-black px-4 text-white hover:bg-black/90"
+                className="h-10 rounded-xl border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
                 onClick={() => setIsOpen(true)}
                 disabled={!teamId}
             >
@@ -150,8 +150,8 @@ export default function GameCreateDialog({
             {/* ダイアログは簡易モーダルで表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">
-                        <CardHeader className="border-b border-gray-200 px-6 py-4">
+                    <Card className="w-full max-w-lg rounded-2xl border border-border/70 shadow-lg">
+                        <CardHeader className="border-b border-border/70 px-6 py-4">
                             <div className="text-sm font-semibold">
                                 試合作成
                             </div>
@@ -164,7 +164,7 @@ export default function GameCreateDialog({
                                 <Input
                                     id="game-date"
                                     type="date"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={gameDate}
                                     onChange={(event) =>
                                         setGameDate(event.target.value)
@@ -180,7 +180,7 @@ export default function GameCreateDialog({
                                     id="opponent"
                                     type="text"
                                     placeholder="Tigers"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={opponent}
                                     onChange={(event) =>
                                         setOpponent(event.target.value)
@@ -196,7 +196,7 @@ export default function GameCreateDialog({
                                     id="venue"
                                     type="text"
                                     placeholder="Tokyo Ice Arena"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={venue}
                                     onChange={(event) =>
                                         setVenue(event.target.value)
@@ -210,7 +210,7 @@ export default function GameCreateDialog({
                                 </Label>
                                 <select
                                     id="period"
-                                    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
                                     value={periodMinutes}
                                     onChange={(event) =>
                                         setPeriodMinutes(
@@ -250,7 +250,7 @@ export default function GameCreateDialog({
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-lg border-gray-200"
+                                    className="h-9 rounded-lg border-border/70"
                                     onClick={() => {
                                         setIsOpen(false);
                                         resetForm();
@@ -260,7 +260,7 @@ export default function GameCreateDialog({
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
+                                    className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
                                     onClick={handleSubmit}
                                     disabled={isSaving}
                                 >

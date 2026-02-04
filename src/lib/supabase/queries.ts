@@ -71,9 +71,17 @@ export async function getMemberWithTeam(
 // チームに紐づく試合一覧を取得する
 // - 一覧は日付降順で表示するため order を固定する
 // - teamId 未指定の場合は全件となるため、呼び出し側で制御する
+type GameFilters = {
+    season?: string | null;
+    from?: string | null;
+    to?: string | null;
+    overtime?: boolean | null;
+};
+
 export async function getGamesByTeam(
     supabase: SupabaseClient<Database>,
-    teamId?: string | null
+    teamId?: string | null,
+    filters?: GameFilters
 ) {
     let query = supabase
         .from("games")
@@ -84,7 +92,68 @@ export async function getGamesByTeam(
         query = query.eq("team_id", teamId);
     }
 
+    if (filters?.season) {
+        query = query.eq("season", filters.season);
+    }
+
+    if (filters?.from) {
+        query = query.gte("game_date", filters.from);
+    }
+
+    if (filters?.to) {
+        query = query.lte("game_date", filters.to);
+    }
+
+    if (filters?.overtime) {
+        query = query.eq("has_overtime", true);
+    }
+
     return query.then((result) => result as { data: GameRow[] | null });
+}
+
+// チーム内で未入力（スタッツ未記録）の試合数を取得する
+// - player_stats / goalie_stats が0件の試合を未入力とみなす
+export async function getUnloggedGameCountByTeam(
+    supabase: SupabaseClient<Database>,
+    teamId?: string | null
+) {
+    if (!teamId) {
+        return { data: 0 };
+    }
+
+    const { data: games } = await supabase
+        .from("games")
+        .select("id")
+        .eq("team_id", teamId);
+
+    const gameIds = (games ?? []).map((game) => game.id);
+
+    if (gameIds.length === 0) {
+        return { data: 0 };
+    }
+
+    const { data: skaterStats } = await supabase
+        .from("player_stats")
+        .select("game_id")
+        .in("game_id", gameIds);
+
+    const { data: goalieStats } = await supabase
+        .from("goalie_stats")
+        .select("game_id")
+        .in("game_id", gameIds);
+
+    const loggedGameIds = new Set<string>();
+
+    (skaterStats ?? []).forEach((stat) => {
+        if (stat.game_id) loggedGameIds.add(stat.game_id);
+    });
+
+    (goalieStats ?? []).forEach((stat) => {
+        if (stat.game_id) loggedGameIds.add(stat.game_id);
+    });
+
+    const unloggedCount = gameIds.filter((id) => !loggedGameIds.has(id)).length;
+    return { data: unloggedCount };
 }
 
 // シーズンに紐づく試合ID一覧を取得する
@@ -136,7 +205,8 @@ export async function getSeasonLabelsByTeam(
 // roster管理用（Activeのみ）
 export async function getPlayersByTeam(
     supabase: SupabaseClient<Database>,
-    teamId: string | null
+    teamId: string | null,
+    options?: { includeInactive?: boolean }
 ) {
     if (!teamId) {
         return {
@@ -150,12 +220,17 @@ export async function getPlayersByTeam(
         };
     }
 
-    return supabase
+    let query = supabase
         .from("players")
         .select("id, name, number, position, is_active")
         .eq("team_id", teamId)
-        .eq("is_active", true)
         .order("number", { ascending: true });
+
+    if (!options?.includeInactive) {
+        query = query.eq("is_active", true);
+    }
+
+    return query;
 }
 
 // チーム所属のスケーター一覧を取得する（G以外）

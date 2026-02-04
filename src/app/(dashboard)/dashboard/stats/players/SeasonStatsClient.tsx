@@ -77,22 +77,26 @@ export default function SeasonStatsClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="mx-auto w-full max-w-6xl">
             {/* 右側に用語集リンクとシーズン選択 */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <div className="text-sm font-semibold">シーズン通算</div>
-                    <div className="mt-1 h-0.5 w-12 rounded-full bg-gray-900" />
+                    <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="font-display">Season Stats</span>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                        シーズン単位で選手・ゴーリーの通算を確認
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <a
                         href="/dashboard/stats/glossary"
-                        className="rounded-lg border-2 border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted/40"
+                        className="rounded-lg border border-border/70 bg-white/80 px-3 py-2 text-xs text-muted-foreground hover:bg-muted/40"
                     >
                         用語集
                     </a>
                     <select
-                        className="h-9 rounded-lg border-2 border-border bg-white px-3 text-xs text-muted-foreground"
+                        className="h-9 rounded-lg border border-border/70 bg-white/80 px-3 text-xs text-muted-foreground"
                         value={seasonLabel}
                         onChange={(event) =>
                             handleSeasonChange(event.target.value)
@@ -108,7 +112,7 @@ export default function SeasonStatsClient({
             </div>
 
             {/* 集計対象のシーズンを明示する */}
-            <Card className="mb-6 border-2 border-dashed border-border bg-muted/20">
+            <Card className="mb-6 border border-dashed border-border/70 bg-muted/20">
                 <CardContent className="p-4 text-xs text-muted-foreground">
                     ℹ {seasonLabel} の全試合スタッツを集計しています
                 </CardContent>
@@ -122,7 +126,7 @@ export default function SeasonStatsClient({
                 </TabsList>
 
                 <TabsContent value="skaters">
-                    <Card className="border-2 border-border">
+                    <Card className="border border-border/60">
                         <CardContent className="p-6">
                             <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-xs text-muted-foreground sm:grid-cols-[160px_80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
                                 <div>Name</div>
@@ -170,7 +174,7 @@ export default function SeasonStatsClient({
                                 {skaterRows.map((player) => (
                                     <div
                                         key={player.id}
-                                        className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border-2 border-border px-4 py-3 text-sm sm:grid-cols-[160px_80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]"
+                                        className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm sm:grid-cols-[160px_80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]"
                                     >
                                         <div className="font-semibold text-gray-700">
                                             #{player.number} {player.name}
@@ -201,7 +205,7 @@ export default function SeasonStatsClient({
                 </TabsContent>
 
                 <TabsContent value="goalies">
-                    <Card className="border-2 border-border">
+                    <Card className="border border-border/60">
                         <CardContent className="p-6">
                             <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-xs text-muted-foreground sm:grid-cols-[160px_1fr_1fr_1fr_1fr_1fr_1fr]">
                                 <div>Name</div>
@@ -246,7 +250,7 @@ export default function SeasonStatsClient({
                                     return (
                                         <div
                                             key={player.id}
-                                            className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border-2 border-border px-4 py-3 text-sm sm:grid-cols-[160px_1fr_1fr_1fr_1fr_1fr_1fr]"
+                                            className="grid grid-cols-[160px_1fr] items-center gap-x-4 gap-y-2 rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm sm:grid-cols-[160px_1fr_1fr_1fr_1fr_1fr_1fr]"
                                         >
                                             <div className="font-semibold text-gray-700">
                                                 #{player.number} {player.name}

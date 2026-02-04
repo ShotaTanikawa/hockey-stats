@@ -118,7 +118,7 @@ export default function JoinSignupForm() {
 
             <Button
                 type="submit"
-                className="h-12 w-full rounded-xl border-2 border-foreground bg-black text-white hover:bg-black/90"
+                className="h-12 w-full rounded-xl border border-foreground bg-foreground text-background hover:bg-foreground/90"
                 disabled={isSubmitting}
             >
                 {isSubmitting ? "作成中..." : "アカウント作成"}

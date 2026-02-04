@@ -41,15 +41,15 @@ export default function DashboardShell({
 
     // ヘッダー / コンテンツ / 下部ナビを共通化する
     return (
-        <div className="min-h-svh bg-white">
-            <header className="border-b-2 border-border bg-card">
-                <div className="mx-auto flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="min-h-svh text-foreground">
+            <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
+                <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
                     {/* クリックでダッシュボードへ戻るタイトル */}
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        className="flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                        <div className="grid h-9 w-9 place-items-center rounded-lg border-2 border-foreground bg-white">
+                        <div className="grid h-10 w-10 place-items-center rounded-xl border border-border/70 bg-white/80 shadow-sm">
                             <span>🏒</span>
                         </div>
                         <div>
@@ -67,7 +67,7 @@ export default function DashboardShell({
                         <Button
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 border-2"
+                            className="h-9 w-9 border-border/70 bg-white/70 shadow-sm"
                             aria-haspopup="menu"
                             aria-expanded={menuOpen}
                             onClick={() => setMenuOpen((prev) => !prev)}
@@ -75,33 +75,33 @@ export default function DashboardShell({
                             ☰
                         </Button>
                         {menuOpen && (
-                            <div className="absolute right-0 mt-2 w-56 rounded-lg border-2 border-border bg-white p-2 text-xs shadow-sm">
+                            <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-border/70 bg-white/90 p-2 text-xs shadow-xl backdrop-blur">
                                 <div className="px-2 py-1 text-muted-foreground">
                                     {userEmail}
                                 </div>
                                 <div className="px-2 py-2">
                                     <span
-                                        className={`rounded-full border-2 px-2 py-0.5 text-[10px] font-semibold ${
+                                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
                                             roleLabel === "staff"
-                                                ? "bg-foreground text-background"
-                                                : "bg-muted text-foreground"
+                                                ? "border-foreground bg-foreground text-background"
+                                                : "border-border bg-muted text-foreground"
                                         }`}
                                     >
                                         {roleLabel.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="my-1 h-px bg-border" />
+                                <div className="my-1 h-px bg-border/70" />
                                 <Link
                                     href="/dashboard"
-                                    className="block rounded-md px-2 py-2 hover:bg-muted"
+                                    className="block rounded-lg px-2 py-2 hover:bg-muted/60"
                                     onClick={() => setMenuOpen(false)}
                                 >
                                     Team Info
                                 </Link>
-                                <div className="my-1 h-px bg-border" />
+                                <div className="my-1 h-px bg-border/70" />
                                 <button
                                     type="button"
-                                    className="w-full rounded-md px-2 py-2 text-left hover:bg-muted"
+                                    className="w-full rounded-lg px-2 py-2 text-left hover:bg-muted/60"
                                     onClick={handleLogout}
                                 >
                                     Logout
@@ -112,18 +112,18 @@ export default function DashboardShell({
                 </div>
             </header>
 
-            <main className="mx-auto w-full max-w-5xl px-6 py-8">
+            <main className="mx-auto w-full max-w-6xl px-6 pb-24 pt-8">
                 {children}
             </main>
 
-            <nav className="border-t-2 border-border bg-card">
-                <div className="mx-auto grid w-full grid-cols-3 text-center text-xs text-muted-foreground">
+            <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/80 backdrop-blur">
+                <div className="mx-auto grid w-full max-w-6xl grid-cols-3 text-center text-xs text-muted-foreground">
                     <Link
                         href="/dashboard/games"
                         className={`py-3 ${
                             isActive("/dashboard/games")
                                 ? "bg-foreground text-background"
-                                : "hover:bg-muted"
+                                : "hover:bg-muted/60"
                         }`}
                     >
                         Games
@@ -133,7 +133,7 @@ export default function DashboardShell({
                         className={`py-3 ${
                             isActive("/dashboard/players")
                                 ? "bg-foreground text-background"
-                                : "hover:bg-muted"
+                                : "hover:bg-muted/60"
                         }`}
                     >
                         Players
@@ -143,7 +143,7 @@ export default function DashboardShell({
                         className={`py-3 ${
                             isActive("/dashboard/stats")
                                 ? "bg-foreground text-background"
-                                : "hover:bg-muted"
+                                : "hover:bg-muted/60"
                         }`}
                     >
                         Stats

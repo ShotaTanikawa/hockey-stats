@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { updateSession } from "./lib/supabase/proxy";
 
 // 全リクエストでセッション更新を実行（保護ページの判定も含む）
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     return await updateSession(request);
 }
 

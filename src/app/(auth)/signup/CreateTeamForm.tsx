@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,13 @@ export default function CreateTeamForm() {
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
     const [teamName, setTeamName] = useState("");
-    const [seasonLabel, setSeasonLabel] = useState("");
+    const [seasonLabel, setSeasonLabel] = useState(() => {
+        const year = new Date().getFullYear();
+        const options = [year - 1, year, year + 1].map(
+            (start) => `${start}-${String(start + 1).slice(2)}`
+        );
+        return options[1] ?? options[0] ?? "";
+    });
     const [createEmail, setCreateEmail] = useState("");
     const [createPassword, setCreatePassword] = useState("");
     const [createError, setCreateError] = useState<string | null>(null);
@@ -28,12 +34,7 @@ export default function CreateTeamForm() {
         );
     }, []);
 
-    // シーズン未選択の場合は当年シーズンを初期値にする
-    useEffect(() => {
-        if (!seasonLabel && seasonOptions.length > 0) {
-            setSeasonLabel(seasonOptions[1] ?? seasonOptions[0]);
-        }
-    }, [seasonLabel, seasonOptions]);
+    // seasonLabel は初期値で当年シーズンをセットする
 
     // 初回ユーザーがチームを作成するフロー
     // - チーム作成後に join_code を表示
@@ -206,7 +207,7 @@ export default function CreateTeamForm() {
 
             <Button
                 type="submit"
-                className="h-12 w-full rounded-xl border-2 border-foreground bg-black text-white hover:bg-black/90"
+                className="h-12 w-full rounded-xl border border-foreground bg-foreground text-background hover:bg-foreground/90"
                 disabled={isCreating}
             >
                 {isCreating ? "作成中..." : "チーム作成"}

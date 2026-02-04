@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type {
-    GameRow,
     GoalieStatWithPlayer,
     SkaterStatWithPlayer,
 } from "@/lib/types/stats";
@@ -108,10 +107,10 @@ export default async function GameDetailPage({
                 ← 試合一覧へ
             </Link>
 
-            <Card className="border-2 border-border">
+            <Card className="border border-border/60">
                 <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div className="text-sm font-semibold">
+                        <div className="text-lg font-semibold tracking-tight">
                             {formatGameDate(game.game_date)} vs {game.opponent}
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -128,7 +127,7 @@ export default async function GameDetailPage({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-2"
+                                className="border border-border/70"
                                 asChild
                             >
                                 <Link href={`/dashboard/games/${game.id}/edit`}>
@@ -137,7 +136,7 @@ export default async function GameDetailPage({
                             </Button>
                             <Button
                                 size="sm"
-                                className="border-2 border-foreground bg-black text-white"
+                                className="border border-foreground bg-foreground text-background"
                                 asChild
                             >
                                 <Link href={`/dashboard/games/${game.id}/live`}>
@@ -150,8 +149,8 @@ export default async function GameDetailPage({
             </Card>
 
             <div className="grid gap-6">
-                <Card className="border-2 border-border">
-                    <CardHeader className="border-b-2 border-border">
+                <Card className="border border-border/60">
+                    <CardHeader className="border-b border-border/60">
                         <CardTitle className="text-base">Team Totals</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-4 py-6 text-sm sm:grid-cols-5">
@@ -190,8 +189,8 @@ export default async function GameDetailPage({
                     </CardContent>
                 </Card>
 
-                <Card className="border-2 border-border">
-                    <CardHeader className="border-b-2 border-border">
+                <Card className="border border-border/60">
+                    <CardHeader className="border-b border-border/60">
                         <CardTitle className="text-base">Skaters</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
@@ -209,7 +208,7 @@ export default async function GameDetailPage({
                                 return (
                                     <div
                                         key={row.player_id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border-2 border-border px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]"
+                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr_1fr]"
                                     >
                                         <div className="font-semibold text-gray-700">
                                             #{player?.number} {player?.name}
@@ -226,8 +225,8 @@ export default async function GameDetailPage({
                     </CardContent>
                 </Card>
 
-                <Card className="border-2 border-border">
-                    <CardHeader className="border-b-2 border-border">
+                <Card className="border border-border/60">
+                    <CardHeader className="border-b border-border/60">
                         <CardTitle className="text-base">Goalies</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
@@ -244,7 +243,7 @@ export default async function GameDetailPage({
                                 return (
                                     <div
                                         key={row.player_id}
-                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-lg border-2 border-border px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr]"
+                                        className="grid grid-cols-[140px_1fr] items-center gap-x-4 gap-y-2 rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm sm:grid-cols-[140px_1fr_1fr_1fr_1fr]"
                                     >
                                         <div className="font-semibold text-gray-700">
                                             #{player?.number} {player?.name}

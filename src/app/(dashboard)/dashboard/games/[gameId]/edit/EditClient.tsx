@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type {
     Goalie,
@@ -202,15 +201,19 @@ export default function EditClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-5xl px-6 py-8">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="mx-auto w-full max-w-6xl px-6 py-8">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <div className="text-sm font-semibold">試合後修正</div>
-                    <div className="text-xs text-gray-500">vs {opponent}</div>
+                    <div className="text-lg font-semibold tracking-tight">
+                        <span className="font-display">試合後修正</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        vs {opponent}
+                    </div>
                 </div>
                 {canEdit && (
                     <Button
-                        className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
+                        className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
                         onClick={handleSave}
                         disabled={saving}
                     >
@@ -221,14 +224,14 @@ export default function EditClient({
 
             {/* viewer 向けの説明 */}
             {!canEdit && (
-                <div className="mb-6 rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-500">
+                <div className="mb-6 rounded-2xl border border-dashed border-border/70 px-4 py-3 text-xs text-muted-foreground">
                     viewer 権限のため編集できません
                 </div>
             )}
 
             {/* 保存エラーを表示 */}
             {error && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
+                <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
                     {error}
                 </div>
             )}

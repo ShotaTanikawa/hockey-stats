@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
 import type { PlayerRow } from "@/lib/types/stats";
 import { getMemberWithTeam, getPlayersByTeam } from "@/lib/supabase/queries";
@@ -32,10 +35,19 @@ const positionStyle: Record<
     },
 };
 
-export default async function DashboardPlayersPage() {
+export default async function DashboardPlayersPage({
+    searchParams,
+}: {
+    searchParams?: Promise<{
+        q?: string;
+        position?: string;
+        status?: string;
+    }>;
+}) {
     // サーバー側でSupabaseクライアントを生成（RLSで絞り込み）
     const supabase = await createClient();
 
+    const resolvedSearchParams = await searchParams;
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -55,42 +67,140 @@ export default async function DashboardPlayersPage() {
     // アクティブな選手を背番号順で取得
     const { data: players } = await getPlayersByTeam(
         supabase,
-        team?.id ?? null
+        team?.id ?? null,
+        { includeInactive: true }
     );
 
     const playerRows = (players ?? []) as PlayerRow[];
+    const searchQuery = resolvedSearchParams?.q?.trim() ?? "";
+    const positionFilter = resolvedSearchParams?.position ?? "all";
+    const statusFilter = resolvedSearchParams?.status ?? "active";
+
+    const filteredPlayers = playerRows.filter((player) => {
+        if (statusFilter === "active" && !player.is_active) return false;
+        if (statusFilter === "inactive" && player.is_active) return false;
+        if (positionFilter !== "all" && player.position !== positionFilter)
+            return false;
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const nameMatches = player.name.toLowerCase().includes(query);
+            const numberMatches = String(player.number).includes(query);
+            if (!nameMatches && !numberMatches) return false;
+        }
+        return true;
+    });
 
     return (
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="mx-auto w-full max-w-6xl">
             {/* staff のみ選手追加ボタンを表示 */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <div className="text-sm font-semibold">選手一覧</div>
-                    <div className="mt-1 h-0.5 w-12 rounded-full bg-gray-900" />
+                    <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="font-display">Players</span>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                        登録選手の管理とポジションの確認
+                    </div>
                 </div>
                 {isStaff && (
                     <PlayerCreateDialog teamId={team?.id} role={member?.role} />
                 )}
             </div>
 
+            <Card className="mb-6 border border-border/60">
+                <CardContent className="space-y-4 p-5">
+                    <form method="GET" className="grid gap-4">
+                        <div className="grid gap-4 lg:grid-cols-[2fr_1fr_1fr]">
+                            <div className="space-y-2">
+                                <Label htmlFor="search" className="text-xs">
+                                    検索（名前/背番号）
+                                </Label>
+                                <Input
+                                    id="search"
+                                    name="q"
+                                    placeholder="Suzuki / 24"
+                                    className="h-11 rounded-xl border-2"
+                                    defaultValue={searchQuery}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="position" className="text-xs">
+                                    ポジション
+                                </Label>
+                                <select
+                                    id="position"
+                                    name="position"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
+                                    defaultValue={positionFilter}
+                                >
+                                    <option value="all">すべて</option>
+                                    <option value="F">Forward</option>
+                                    <option value="D">Defense</option>
+                                    <option value="G">Goalie</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="status" className="text-xs">
+                                    ステータス
+                                </Label>
+                                <select
+                                    id="status"
+                                    name="status"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
+                                    defaultValue={statusFilter}
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <div>{filteredPlayers.length} players</div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    className="h-9 rounded-lg border border-foreground bg-foreground px-3 text-background"
+                                >
+                                    適用
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 rounded-lg border-border/70"
+                                    asChild
+                                >
+                                    <Link href="/dashboard/players">
+                                        リセット
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+
             {/* ポジションの凡例 */}
             <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-sm border-2 border-blue-500" />
+                    <span className="h-3 w-3 rounded-sm border border-blue-500" />
                     Forward
                 </div>
                 <div className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-sm border-2 border-green-500" />
+                    <span className="h-3 w-3 rounded-sm border border-green-500" />
                     Defense
                 </div>
                 <div className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-sm border-2 border-orange-500" />
+                    <span className="h-3 w-3 rounded-sm border border-orange-500" />
                     Goalie
                 </div>
             </div>
 
             <div className="mb-3 text-xs text-muted-foreground">
-                Active Players
+                Players
             </div>
 
             {/* PC幅のみテーブル風のヘッダー行を表示 */}
@@ -103,12 +213,22 @@ export default async function DashboardPlayersPage() {
             </div>
 
             <div className="space-y-4">
-                {playerRows.map((player) => {
+                {filteredPlayers.length === 0 && (
+                    <Card className="border border-dashed border-border/70 bg-muted/20">
+                        <CardContent className="p-6 text-sm text-muted-foreground">
+                            該当する選手がいません。
+                            {isStaff
+                                ? " 右上の「選手追加」から登録できます。"
+                                : " staff に登録を依頼してください。"}
+                        </CardContent>
+                    </Card>
+                )}
+                {filteredPlayers.map((player) => {
                     const style = positionStyle[player.position];
                     return (
                         <Card
                             key={player.id}
-                            className={`border-2 ${style.border} ${style.bg}`}
+                            className={`border ${style.border} ${style.bg} transition hover:-translate-y-0.5 hover:shadow-lg`}
                         >
                             <CardContent className="flex flex-col gap-4 p-5 sm:grid sm:grid-cols-[100px_1fr_140px_140px_140px] sm:items-center">
                                 <div className="text-sm font-semibold text-gray-700">
@@ -118,14 +238,20 @@ export default async function DashboardPlayersPage() {
                                     {player.name}
                                 </div>
                                 <div>
-                                    <span className="rounded-full border-2 border-border bg-white px-2 py-0.5 text-xs font-semibold text-gray-600">
+                                    <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-gray-600">
                                         {style.label}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs font-semibold text-white">
-                                        Active
-                                    </span>
+                                    {player.is_active ? (
+                                        <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs font-semibold text-white">
+                                            Active
+                                        </span>
+                                    ) : (
+                                        <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                                            Inactive
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex items-center justify-end gap-2">
                                     {/* staff のみ編集アクションを表示 */}
@@ -153,7 +279,7 @@ export default async function DashboardPlayersPage() {
 
             {/* viewer 向けの注意書き */}
             {!isStaff && (
-                <Card className="mt-6 border-2 border-dashed border-border bg-muted/20">
+                <Card className="mt-6 border border-dashed border-border/70 bg-muted/20">
                     <CardContent className="p-4 text-xs text-muted-foreground">
                         ※ viewer 権限のため閲覧のみ可能です
                     </CardContent>

@@ -89,8 +89,8 @@ export default function TeamMembersCard({
     }
 
     return (
-        <Card className="mb-8 border-2 border-border">
-            <CardHeader className="border-b-2 border-border">
+        <Card className="mb-8 border border-border/60">
+            <CardHeader className="border-b border-border/60">
                 <CardTitle className="text-base">チームメンバー</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 py-6">
@@ -116,7 +116,7 @@ export default function TeamMembersCard({
                             return (
                                 <div
                                     key={member.userId}
-                                    className="flex flex-col gap-3 rounded-lg border-2 border-border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                                    className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div>
                                         <div className="font-semibold text-gray-700">
@@ -131,7 +131,7 @@ export default function TeamMembersCard({
                                         {member.role === "viewer" && !isSelf && (
                                             <Button
                                                 size="sm"
-                                                className="h-8 rounded-lg border-2 border-foreground bg-black px-3 text-white hover:bg-black/90"
+                                                className="h-8 rounded-lg border border-foreground bg-foreground px-3 text-background hover:bg-foreground/90"
                                                 onClick={() =>
                                                     handlePromote(member.userId)
                                                 }

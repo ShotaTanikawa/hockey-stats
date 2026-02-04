@@ -7,7 +7,8 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "test:e2e": "playwright test"
     },
     "dependencies": {
         "@radix-ui/react-label": "^2.1.8",
@@ -27,6 +28,7 @@
         "zod": "^3.25.76"
     },
     "devDependencies": {
+        "@playwright/test": "^1.58.1",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^20",
         "@types/react": "^19",

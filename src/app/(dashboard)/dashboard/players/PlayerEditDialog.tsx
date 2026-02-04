@@ -132,8 +132,8 @@ export default function PlayerEditDialog({
             {/* 簡易モーダルで編集フォームを表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">
-                        <CardHeader className="border-b border-gray-200 px-6 py-4">
+                    <Card className="w-full max-w-lg rounded-2xl border border-border/70 shadow-lg">
+                        <CardHeader className="border-b border-border/70 px-6 py-4">
                             <div className="text-sm font-semibold">
                                 選手編集
                             </div>
@@ -149,7 +149,7 @@ export default function PlayerEditDialog({
                                 <Input
                                     id="edit-player-name"
                                     type="text"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={name}
                                     onChange={(event) =>
                                         setName(event.target.value)
@@ -168,7 +168,7 @@ export default function PlayerEditDialog({
                                     id="edit-player-number"
                                     type="number"
                                     min={1}
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={number}
                                     onChange={(event) =>
                                         setNumber(event.target.value)
@@ -185,7 +185,7 @@ export default function PlayerEditDialog({
                                 </Label>
                                 <select
                                     id="edit-player-position"
-                                    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
                                     value={position}
                                     onChange={(event) =>
                                         setPosition(
@@ -223,7 +223,7 @@ export default function PlayerEditDialog({
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-lg border-gray-200"
+                                    className="h-9 rounded-lg border-border/70"
                                     onClick={() => {
                                         setIsOpen(false);
                                         resetForm();
@@ -233,7 +233,7 @@ export default function PlayerEditDialog({
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
+                                    className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
                                     onClick={handleSubmit}
                                     disabled={isSaving}
                                 >

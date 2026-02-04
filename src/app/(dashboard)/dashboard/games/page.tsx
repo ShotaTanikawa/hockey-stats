@@ -3,8 +3,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { GameRow } from "@/lib/types/stats";
-import { getGamesByTeam, getMemberWithTeam } from "@/lib/supabase/queries";
+import {
+    getGamesByTeam,
+    getMemberWithTeam,
+    getSeasonLabelsByTeam,
+} from "@/lib/supabase/queries";
 import GameCreateDialog from "./GameCreateDialog";
 
 export const dynamic = "force-dynamic";
@@ -33,10 +39,21 @@ function formatGameDate(dateString: string) {
     return `${month}月${day}日(${weekday})`;
 }
 
-export default async function DashboardGamesPage() {
+export default async function DashboardGamesPage({
+    searchParams,
+}: {
+    searchParams?: Promise<{
+        season?: string;
+        q?: string;
+        from?: string;
+        to?: string;
+        overtime?: string;
+    }>;
+}) {
     // サーバー側でSupabaseクライアントを生成（RLSで絞り込み）
     const supabase = await createClient();
 
+    const resolvedSearchParams = await searchParams;
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -53,18 +70,52 @@ export default async function DashboardGamesPage() {
     // staffのみ作成/ライブ導線を表示する
     const isStaff = member?.role === "staff";
 
+    const selectedSeason =
+        resolvedSearchParams?.season ?? team?.season_label ?? "all";
+    const fromDate = resolvedSearchParams?.from ?? "";
+    const toDate = resolvedSearchParams?.to ?? "";
+    const searchQuery = resolvedSearchParams?.q?.trim() ?? "";
+    const overtimeOnly = resolvedSearchParams?.overtime === "1";
+
     // 試合一覧を日付降順で取得
-    const { data: games } = await getGamesByTeam(supabase, team?.id);
+    const { data: games } = await getGamesByTeam(supabase, team?.id, {
+        season: selectedSeason === "all" ? null : selectedSeason,
+        from: fromDate || null,
+        to: toDate || null,
+        overtime: overtimeOnly || null,
+    });
 
     const gameRows = (games ?? []) as GameRow[];
+    const filteredGames = searchQuery
+        ? gameRows.filter((game) => {
+              const haystack = `${game.opponent} ${game.venue ?? ""}`.toLowerCase();
+              return haystack.includes(searchQuery.toLowerCase());
+          })
+        : gameRows;
+
+    const { data: seasons } = await getSeasonLabelsByTeam(
+        supabase,
+        team?.id ?? null
+    );
+    const seasonOptions = Array.from(
+        new Set(
+            [team?.season_label, ...(seasons ?? [])].filter(
+                (season): season is string => Boolean(season)
+            )
+        )
+    );
 
     return (
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="mx-auto w-full max-w-6xl">
             {/* staff のみ作成ボタンを表示 */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <div className="text-sm font-semibold">試合一覧</div>
-                    <div className="mt-1 h-0.5 w-12 rounded-full bg-gray-900" />
+                    <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="font-display">Games</span>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                        試合の作成・管理とライブ入力をまとめて確認
+                    </div>
                 </div>
                 {isStaff && (
                     <GameCreateDialog
@@ -73,6 +124,103 @@ export default async function DashboardGamesPage() {
                     />
                 )}
             </div>
+
+            <Card className="mb-6 border border-border/60">
+                <CardContent className="space-y-4 p-5">
+                    <form method="GET" className="grid gap-4">
+                        <div className="grid gap-4 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+                            <div className="space-y-2">
+                                <Label htmlFor="search" className="text-xs">
+                                    検索（対戦相手/会場）
+                                </Label>
+                                <Input
+                                    id="search"
+                                    name="q"
+                                    placeholder="Tigers / Tokyo"
+                                    className="h-11 rounded-xl border-2"
+                                    defaultValue={searchQuery}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="season" className="text-xs">
+                                    シーズン
+                                </Label>
+                                <select
+                                    id="season"
+                                    name="season"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
+                                    defaultValue={selectedSeason}
+                                >
+                                    <option value="all">全シーズン</option>
+                                    {seasonOptions.map((season) => (
+                                        <option key={season} value={season}>
+                                            {season}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="from" className="text-xs">
+                                    From
+                                </Label>
+                                <Input
+                                    id="from"
+                                    name="from"
+                                    type="date"
+                                    className="h-11 rounded-xl border-2"
+                                    defaultValue={fromDate}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="to" className="text-xs">
+                                    To
+                                </Label>
+                                <Input
+                                    id="to"
+                                    name="to"
+                                    type="date"
+                                    className="h-11 rounded-xl border-2"
+                                    defaultValue={toDate}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        name="overtime"
+                                        value="1"
+                                        defaultChecked={overtimeOnly}
+                                        className="h-4 w-4 rounded border-border/70"
+                                    />
+                                    OTのみ表示
+                                </label>
+                                <span>{filteredGames.length} games</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    className="h-9 rounded-lg border border-foreground bg-foreground px-3 text-background"
+                                >
+                                    適用
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 rounded-lg border-border/70"
+                                    asChild
+                                >
+                                    <Link href="/dashboard/games">リセット</Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
 
             {/* PC幅のみテーブル風のヘッダー行を表示 */}
             <div className="mb-3 hidden items-center px-4 text-xs text-muted-foreground sm:grid sm:grid-cols-[120px_1fr_160px_160px_180px]">
@@ -84,8 +232,21 @@ export default async function DashboardGamesPage() {
             </div>
 
             <div className="space-y-4">
-                {gameRows.map((game) => (
-                    <Card key={game.id} className="border-2 border-border">
+                {filteredGames.length === 0 && (
+                    <Card className="border border-dashed border-border/70 bg-muted/20">
+                        <CardContent className="p-6 text-sm text-muted-foreground">
+                            該当する試合がありません。
+                            {isStaff
+                                ? " 右上の「新規作成」から追加できます。"
+                                : " staff に作成を依頼してください。"}
+                        </CardContent>
+                    </Card>
+                )}
+                {filteredGames.map((game) => (
+                    <Card
+                        key={game.id}
+                        className="border border-border/60 transition hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg"
+                    >
                         <CardContent className="flex flex-col gap-4 p-5 sm:grid sm:grid-cols-[120px_1fr_160px_160px_180px] sm:items-center">
                             <div className="text-sm text-muted-foreground">
                                 {formatGameDate(game.game_date)}
@@ -98,11 +259,11 @@ export default async function DashboardGamesPage() {
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 {game.has_overtime && (
-                                    <span className="rounded-full border-2 border-border bg-white px-2 py-0.5 text-gray-600">
+                                    <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-gray-600">
                                         OT
                                     </span>
                                 )}
-                                <span className="rounded-full border-2 border-border bg-white px-2 py-0.5 text-gray-600">
+                                <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-gray-600">
                                     {game.period_minutes}min
                                 </span>
                             </div>
@@ -110,7 +271,7 @@ export default async function DashboardGamesPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 rounded-lg border-2 px-3"
+                                    className="h-8 rounded-lg border border-border/70 px-3"
                                     asChild
                                 >
                                     <Link href={`/dashboard/games/${game.id}`}>
@@ -121,7 +282,7 @@ export default async function DashboardGamesPage() {
                                 {isStaff && (
                                     <Button
                                         size="sm"
-                                        className="h-8 rounded-lg border-2 border-foreground bg-black px-3 text-white hover:bg-black/90"
+                                        className="h-8 rounded-lg border border-foreground bg-foreground px-3 text-background hover:bg-foreground/90"
                                         asChild
                                     >
                                         <Link
@@ -139,7 +300,7 @@ export default async function DashboardGamesPage() {
 
             {/* viewer 向けの注意書き */}
             {!isStaff && (
-                <Card className="mt-6 border-2 border-dashed border-border bg-muted/20">
+                <Card className="mt-6 border border-dashed border-border/70 bg-muted/20">
                     <CardContent className="p-4 text-xs text-muted-foreground">
                         ※ viewer 権限のため閲覧のみ可能です
                     </CardContent>

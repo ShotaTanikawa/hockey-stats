@@ -8,8 +8,8 @@ type Props = {
 
 export default function LiveEventLogCard({ log }: Props) {
     return (
-        <Card className="border-gray-200">
-            <CardHeader className="border-b border-gray-200">
+        <Card className="border border-border/60">
+            <CardHeader className="border-b border-border/60">
                 <CardTitle className="text-base">Event Log</CardTitle>
             </CardHeader>
             <CardContent className="p-6">

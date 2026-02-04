@@ -69,14 +69,18 @@ export default async function StatsGlossaryPage() {
     }
 
     return (
-        <div className="mx-auto w-full max-w-4xl space-y-6">
+        <div className="mx-auto w-full max-w-6xl space-y-6">
             <div>
-                <div className="text-sm font-semibold">スタッツ用語集</div>
-                <div className="mt-1 h-0.5 w-12 rounded-full bg-gray-900" />
+                <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                    <span className="font-display">Glossary</span>
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                    スタッツ用語と計算式の確認
+                </div>
             </div>
 
-            <Card className="border-2 border-border">
-                <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border/60">
+                <CardHeader className="border-b border-border/60">
                     <CardTitle className="text-base">
                         用語と計算式
                     </CardTitle>
@@ -85,7 +89,7 @@ export default async function StatsGlossaryPage() {
                     {GLOSSARY.map((item) => (
                         <div
                             key={item.term}
-                            className="rounded-lg border-2 border-border px-4 py-3"
+                            className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3"
                         >
                             <div className="font-semibold text-gray-700">
                                 {item.term}

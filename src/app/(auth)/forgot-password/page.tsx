@@ -56,12 +56,25 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-muted px-4 py-10">
-            <div className="mx-auto w-full max-w-md pt-10">
-                <Card className="rounded-2xl border-2 border-border shadow-sm">
-                    <CardHeader className="space-y-4 border-b-2 border-border p-6">
+        <div className="min-h-screen w-full px-4 py-12">
+            <div className="mx-auto grid w-full max-w-4xl items-center gap-8 lg:grid-cols-[1.2fr_1fr]">
+                <div className="flex flex-col justify-center rounded-3xl border border-border/60 bg-white/70 p-8 shadow-xl backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Account Recovery
+                    </div>
+                    <div className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                        <span className="font-display">Reset</span> your access
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                        登録済みのメールアドレスにリセット用リンクを送信します。
+                        新しいパスワードで安全に再ログインできます。
+                    </p>
+                </div>
+
+                <Card className="w-full rounded-3xl border border-border/60 shadow-xl">
+                    <CardHeader className="space-y-4 border-b border-border/60 p-6">
                         <div className="flex items-center gap-3">
-                            <div className="grid h-10 w-10 place-items-center rounded-xl border-2 border-border bg-white">
+                            <div className="grid h-11 w-11 place-items-center rounded-2xl border border-border/70 bg-white/80">
                                 <span className="text-lg">🏒</span>
                             </div>
                             <div className="text-xl font-semibold tracking-tight">
@@ -69,10 +82,10 @@ export default function ForgotPasswordPage() {
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <div className="text-base font-semibold">
-                                パスワード再設定
-                            </div>
-                            <div className="text-sm text-gray-500">
+                        <h1 className="text-base font-semibold">
+                            パスワード再設定
+                        </h1>
+                            <div className="text-sm text-muted-foreground">
                                 登録済みのメールアドレスを入力してください
                             </div>
                         </div>
@@ -96,18 +109,18 @@ export default function ForgotPasswordPage() {
                             <Button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="h-12 w-full rounded-xl border-2 border-foreground bg-black text-white hover:bg-black/90"
+                                className="h-12 w-full rounded-xl border border-foreground bg-foreground text-background hover:bg-foreground/90"
                             >
                                 {isSubmitting
                                     ? "送信中..."
                                     : "リセットメール送信"}
                             </Button>
                         </CardContent>
-                        <CardFooter className="flex flex-col gap-4 border-t-2 border-border p-6">
+                        <CardFooter className="flex flex-col gap-4 border-t border-border/60 p-6">
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-12 w-full rounded-xl border-2 border-foreground bg-white"
+                                className="h-12 w-full rounded-xl border border-foreground bg-white"
                                 asChild
                             >
                                 <Link href="/login">ログインへ戻る</Link>

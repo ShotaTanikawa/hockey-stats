@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,9 +35,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // モーダルを開いたときに最新のゲーム情報を反映
-    useEffect(() => {
-        if (!isOpen) return;
+    function openDialog() {
         setGameDate(game.game_date);
         setOpponent(game.opponent);
         setVenue(game.venue ?? "");
@@ -45,7 +43,8 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
         setHasOvertime(game.has_overtime);
         setSeason(game.season ?? "");
         setErrorMessage(null);
-    }, [isOpen, game]);
+        setIsOpen(true);
+    }
 
     // メタ情報の更新
     async function handleSave() {
@@ -142,8 +141,8 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
             <Button
                 variant="outline"
                 size="sm"
-                className="border-2"
-                onClick={() => setIsOpen(true)}
+                className="border border-border/70"
+                onClick={openDialog}
                 disabled={!canEdit}
             >
                 試合編集
@@ -152,8 +151,8 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
             {/* 簡易モーダルで編集フォームを表示 */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <Card className="w-full max-w-lg rounded-2xl border border-gray-200 shadow-lg">
-                        <CardHeader className="border-b border-gray-200 px-6 py-4">
+                    <Card className="w-full max-w-lg rounded-2xl border border-border/70 shadow-lg">
+                        <CardHeader className="border-b border-border/70 px-6 py-4">
                             <div className="text-sm font-semibold">
                                 試合編集
                             </div>
@@ -169,7 +168,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 <Input
                                     id="edit-game-date"
                                     type="date"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={gameDate}
                                     onChange={(event) =>
                                         setGameDate(event.target.value)
@@ -187,7 +186,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 <Input
                                     id="edit-opponent"
                                     type="text"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={opponent}
                                     onChange={(event) =>
                                         setOpponent(event.target.value)
@@ -202,7 +201,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 <Input
                                     id="edit-venue"
                                     type="text"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={venue}
                                     onChange={(event) =>
                                         setVenue(event.target.value)
@@ -220,7 +219,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 <Input
                                     id="edit-season"
                                     type="text"
-                                    className="h-11 rounded-xl bg-gray-50"
+                                    className="h-11 rounded-xl bg-white/80"
                                     value={season}
                                     onChange={(event) =>
                                         setSeason(event.target.value)
@@ -237,7 +236,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 </Label>
                                 <select
                                     id="edit-period"
-                                    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
                                     value={periodMinutes}
                                     onChange={(event) =>
                                         setPeriodMinutes(
@@ -277,7 +276,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-lg border-gray-200"
+                                    className="h-9 rounded-lg border-border/70"
                                     onClick={() => setIsOpen(false)}
                                 >
                                     キャンセル
@@ -293,7 +292,7 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="h-9 rounded-lg bg-black px-4 text-white hover:bg-black/90"
+                                    className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
                                     onClick={handleSave}
                                     disabled={isSaving}
                                 >
