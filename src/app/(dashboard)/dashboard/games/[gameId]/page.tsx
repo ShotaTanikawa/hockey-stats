@@ -9,6 +9,7 @@ import type {
     SkaterStatWithPlayer,
 } from "@/lib/types/stats";
 import GameMetaEditDialog from "./GameMetaEditDialog";
+import GameWorkflowActions from "./GameWorkflowActions";
 import {
     getGameById,
     getGoalieStatsWithPlayersByGameId,
@@ -87,6 +88,14 @@ export default async function GameDetailPage({
     const skaterRows = (skaterStats ?? []) as SkaterStatWithPlayer[];
     const goalieRows = (goalieStats ?? []) as GoalieStatWithPlayer[];
     const hasAnyStats = skaterRows.length > 0 || goalieRows.length > 0;
+    const workflowStatus = game.workflow_status ?? "draft";
+    const isLocked = workflowStatus === "finalized";
+    const flowCurrent =
+        workflowStatus === "finalized"
+            ? "review"
+            : hasAnyStats
+              ? "edit"
+              : "create";
 
     // チーム合計を算出（スケーター分のみ）
     const totals = skaterRows.reduce(
@@ -114,7 +123,7 @@ export default async function GameDetailPage({
                     <div className="text-xs text-muted-foreground">
                         試合運用フロー
                     </div>
-                    <GameFlowSteps current="review" />
+                    <GameFlowSteps current={flowCurrent} />
                 </CardContent>
             </Card>
 
@@ -130,32 +139,74 @@ export default async function GameDetailPage({
                             min
                             {game.has_overtime ? " / OT" : ""}
                         </div>
-                    </div>
-                    {/* staff のみ編集 / ライブ導線を表示 */}
-                    {canEdit && (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <GameMetaEditDialog game={game} canEdit={canEdit} />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border border-border/70"
-                                asChild
+                        <div className="mt-2">
+                            <span
+                                className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                                    workflowStatus === "finalized"
+                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                        : workflowStatus === "in_progress"
+                                          ? "border-blue-300 bg-blue-50 text-blue-700"
+                                          : "border-amber-300 bg-amber-50 text-amber-700"
+                                }`}
                             >
-                                <Link href={`/dashboard/games/${game.id}/edit`}>
-                                    修正
-                                </Link>
-                            </Button>
-                            <Button
-                                size="sm"
-                                className="border border-foreground bg-foreground text-background"
-                                asChild
-                            >
-                                <Link href={`/dashboard/games/${game.id}/live`}>
-                                    ライブ
-                                </Link>
-                            </Button>
+                                {workflowStatus === "finalized"
+                                    ? "確定済み"
+                                    : workflowStatus === "in_progress"
+                                      ? "入力中"
+                                      : "下書き"}
+                            </span>
                         </div>
-                    )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border border-border/70"
+                            asChild
+                        >
+                            <a href={`/api/export/games/${game.id}`}>CSV出力</a>
+                        </Button>
+
+                        {/* staff のみ編集 / ライブ導線を表示 */}
+                        {canEdit && (
+                            <>
+                                <GameWorkflowActions
+                                    gameId={game.id}
+                                    workflowStatus={workflowStatus}
+                                    hasAnyStats={hasAnyStats}
+                                    canEdit={canEdit}
+                                />
+                                <GameMetaEditDialog
+                                    game={game}
+                                    canEdit={canEdit}
+                                    isLocked={isLocked}
+                                />
+                                {!isLocked && (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border border-border/70"
+                                            asChild
+                                        >
+                                            <Link href={`/dashboard/games/${game.id}/edit`}>
+                                                修正
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="border border-foreground bg-foreground text-background"
+                                            asChild
+                                        >
+                                            <Link href={`/dashboard/games/${game.id}/live`}>
+                                                ライブ
+                                            </Link>
+                                        </Button>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
 
@@ -166,12 +217,14 @@ export default async function GameDetailPage({
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-muted-foreground">
-                            {hasAnyStats
-                                ? "試合後修正で最終値を確認してください。"
+                            {isLocked
+                                ? "この試合は確定済みです。再開封するとライブ入力と修正を再開できます。"
+                                : hasAnyStats
+                                  ? "試合後修正で最終値を確認し、問題なければ確定してください。"
                                 : "まだ入力がありません。ライブ入力から開始してください。"}
                         </div>
                         <div className="flex items-center gap-2">
-                            {!hasAnyStats && (
+                            {!isLocked && !hasAnyStats && (
                                 <Button
                                     size="sm"
                                     className="border border-foreground bg-foreground text-background"
@@ -182,7 +235,7 @@ export default async function GameDetailPage({
                                     </Link>
                                 </Button>
                             )}
-                            {hasAnyStats && (
+                            {!isLocked && hasAnyStats && (
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -191,6 +244,18 @@ export default async function GameDetailPage({
                                 >
                                     <Link href={`/dashboard/games/${game.id}/edit`}>
                                         試合後修正へ
+                                    </Link>
+                                </Button>
+                            )}
+                            {isLocked && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border border-border/70"
+                                    asChild
+                                >
+                                    <Link href={`/dashboard/games/${game.id}`}>
+                                        確定内容を確認
                                     </Link>
                                 </Button>
                             )}

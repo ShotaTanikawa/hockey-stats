@@ -128,7 +128,14 @@
     }
 
     .font-display {
-        font-family: var(--font-display);
+        font-family:
+            var(--font-display),
+            var(--font-latin),
+            "Hiragino Sans",
+            "Hiragino Kaku Gothic ProN",
+            "Noto Sans JP",
+            "Yu Gothic",
+            sans-serif;
         letter-spacing: -0.02em;
     }
 }

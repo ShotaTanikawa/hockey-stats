@@ -131,6 +131,9 @@ export default async function DashboardGamesPage({
     );
 
     function getGameStage(gameId: string) {
+        const game = gameRows.find((item) => item.id === gameId);
+        if (game?.workflow_status === "finalized") return "確定済み";
+
         const hasSkater = skaterLoggedIds.has(gameId);
         const hasGoalie = goalieLoggedIds.has(gameId);
 
@@ -290,6 +293,10 @@ export default async function DashboardGamesPage({
                         key={game.id}
                         className="border border-border/60 transition hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg"
                     >
+                        {(() => {
+                            const stage = getGameStage(game.id);
+                            const isLocked = game.workflow_status === "finalized";
+                            return (
                         <CardContent className="flex flex-col gap-4 p-5 sm:grid sm:grid-cols-[120px_1fr_160px_160px_220px] sm:items-center">
                             <div className="text-sm text-muted-foreground">
                                 {formatGameDate(game.game_date)}
@@ -303,14 +310,14 @@ export default async function DashboardGamesPage({
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span
                                     className={`rounded-full border px-2 py-0.5 ${
-                                        getGameStage(game.id) === "未入力"
+                                        stage === "未入力"
                                             ? "border-amber-300 bg-amber-50 text-amber-700"
-                                            : getGameStage(game.id) === "入力中"
+                                            : stage === "入力中"
                                               ? "border-blue-300 bg-blue-50 text-blue-700"
                                               : "border-emerald-300 bg-emerald-50 text-emerald-700"
                                     }`}
                                 >
-                                    {getGameStage(game.id)}
+                                    {stage}
                                 </span>
                                 {game.has_overtime && (
                                     <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-gray-600">
@@ -333,7 +340,7 @@ export default async function DashboardGamesPage({
                                     </Link>
                                 </Button>
                                 {/* ライブ入力は staff のみ */}
-                                {isStaff && (
+                                {isStaff && !isLocked && (
                                     <Button
                                         size="sm"
                                         className="h-8 rounded-lg border border-foreground bg-foreground px-3 text-background hover:bg-foreground/90"
@@ -346,7 +353,7 @@ export default async function DashboardGamesPage({
                                         </Link>
                                     </Button>
                                 )}
-                                {isStaff && getGameStage(game.id) !== "未入力" && (
+                                {isStaff && !isLocked && stage !== "未入力" && (
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -360,6 +367,8 @@ export default async function DashboardGamesPage({
                                 )}
                             </div>
                         </CardContent>
+                            );
+                        })()}
                     </Card>
                 ))}
             </div>

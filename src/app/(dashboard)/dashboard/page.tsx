@@ -3,9 +3,17 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, BarChart, ClipboardList, Flag, PlayCircle } from "lucide-react";
+import {
+    AlertTriangle,
+    BarChart,
+    Calendar,
+    ClipboardList,
+    Flag,
+    PlayCircle,
+} from "lucide-react";
 import {
     getMemberWithTeam,
+    getOperationalAlertsByTeam,
     getUnloggedGameCountByTeam,
 } from "@/lib/supabase/queries";
 import TeamMembersCard from "./TeamMembersCard";
@@ -41,6 +49,14 @@ export default async function DashboardPage() {
         supabase,
         teamId
     );
+    const { data: operationalAlerts } = await getOperationalAlertsByTeam(
+        supabase,
+        teamId
+    );
+    const staleGames = operationalAlerts?.staleGames ?? [];
+    const staleCount = operationalAlerts?.staleCount ?? 0;
+    const goalieMismatchGames = operationalAlerts?.goalieMismatchGames ?? [];
+    const goalieMismatchCount = operationalAlerts?.goalieMismatchCount ?? 0;
 
     return (
         <div className="mx-auto w-full max-w-4xl">
@@ -139,6 +155,74 @@ export default async function DashboardPage() {
                     </Button>
                 </CardContent>
             </Card>
+
+            {isStaff && (
+                <Card className="mb-8 border border-amber-200/80 bg-amber-50/50">
+                    <CardHeader className="border-b border-amber-200/80">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <AlertTriangle className="h-4 w-4 text-amber-700" />
+                            要対応アラート
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 py-5 text-sm">
+                        <div className="rounded-xl border border-amber-200 bg-white/90 p-3">
+                            未確定（2日超）:{" "}
+                            <span className="font-semibold">{staleCount}</span>
+                        </div>
+                        <div className="rounded-xl border border-amber-200 bg-white/90 p-3">
+                            ゴーリー整合性エラー:{" "}
+                            <span className="font-semibold">
+                                {goalieMismatchCount}
+                            </span>
+                        </div>
+
+                        {staleGames.length > 0 && (
+                            <div>
+                                <div className="mb-2 text-xs text-muted-foreground">
+                                    未確定の試合（先頭5件）
+                                </div>
+                                <div className="space-y-2">
+                                    {staleGames.map((game) => (
+                                        <Link
+                                            key={game.id}
+                                            href={`/dashboard/games/${game.id}`}
+                                            className="block rounded-lg border border-border/70 bg-white px-3 py-2 text-xs hover:border-border"
+                                        >
+                                            {game.game_date} vs {game.opponent}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {goalieMismatchGames.length > 0 && (
+                            <div>
+                                <div className="mb-2 text-xs text-muted-foreground">
+                                    整合性確認が必要な試合（先頭5件）
+                                </div>
+                                <div className="space-y-2">
+                                    {goalieMismatchGames.map((game) => (
+                                        <Link
+                                            key={game.id}
+                                            href={`/dashboard/games/${game.id}/edit`}
+                                            className="block rounded-lg border border-border/70 bg-white px-3 py-2 text-xs hover:border-border"
+                                        >
+                                            {game.game_date} vs {game.opponent} ・{" "}
+                                            {game.mismatch_count}件
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {staleCount === 0 && goalieMismatchCount === 0 && (
+                            <div className="text-xs text-muted-foreground">
+                                現在、緊急対応が必要な項目はありません。
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {isStaff && (
                 <Card className="mb-8 border border-border/60">

@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import {
+    Fraunces,
+    JetBrains_Mono,
+    Noto_Sans_JP,
+    Space_Grotesk,
+} from "next/font/google";
 import "./globals.css";
 import AppProviders from "@/components/providers/AppProviders";
 
 const spaceGrotesk = Space_Grotesk({
+    variable: "--font-latin",
+    subsets: ["latin"],
+    display: "swap",
+});
+
+const notoSansJp = Noto_Sans_JP({
     variable: "--font-body",
     subsets: ["latin"],
     display: "swap",
@@ -36,7 +47,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${spaceGrotesk.variable} ${fraunces.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+                className={`${spaceGrotesk.variable} ${notoSansJp.variable} ${fraunces.variable} ${jetbrainsMono.variable} font-sans antialiased`}
             >
                 <AppProviders>{children}</AppProviders>
             </body>

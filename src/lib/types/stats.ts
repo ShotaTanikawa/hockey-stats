@@ -7,6 +7,7 @@ export type GameRow = {
     venue: string | null;
     period_minutes: number;
     has_overtime: boolean;
+    workflow_status?: "draft" | "in_progress" | "finalized";
     team_id?: string;
     season?: string;
 };

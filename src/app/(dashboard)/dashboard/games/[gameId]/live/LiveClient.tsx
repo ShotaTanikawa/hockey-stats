@@ -18,6 +18,7 @@ import LiveEventLogCard from "./LiveEventLogCard";
 type Props = {
     gameId: string;
     opponent: string;
+    workflowStatus: "draft" | "in_progress" | "finalized";
     canEdit: boolean;
     skaters: Skater[];
     goalies: Goalie[];
@@ -42,6 +43,7 @@ const EMPTY_GOALIE: GoalieStat = {
 export default function LiveClient({
     gameId,
     opponent,
+    workflowStatus,
     canEdit,
     skaters,
     goalies,
@@ -100,6 +102,14 @@ export default function LiveClient({
     useEffect(() => {
         setGoalieState(initialGoalieState);
     }, [initialGoalieState]);
+
+    useEffect(() => {
+        if (!canEdit || workflowStatus !== "draft") return;
+        void supabase
+            .from("games")
+            .update({ workflow_status: "in_progress" })
+            .eq("id", gameId);
+    }, [canEdit, workflowStatus, gameId, supabase]);
 
     // 直近のイベントを先頭に積む
     function pushLog(message: string) {
@@ -184,15 +194,18 @@ export default function LiveClient({
         setError(null);
 
         const previous = goalieState[playerId] ?? EMPTY_GOALIE;
-        const next: GoalieStat = {
-            ...previous,
-            shots_against:
-                previous.shots_against + (field === "shots_against" ? 1 : 0),
-            goals_against:
-                previous.goals_against + (field === "goals_against" ? 1 : 0),
-            // MVP方針: liveではsavesを更新しない（試合後に確定）
-            saves: previous.saves,
-        };
+        const next: GoalieStat = { ...previous };
+
+        if (field === "shots_against") {
+            next.shots_against += 1;
+        } else {
+            next.goals_against += 1;
+            // GA は SA の部分集合なので、必要なら SA を自動で合わせる
+            next.shots_against = Math.max(next.shots_against, next.goals_against);
+        }
+
+        // MVP方針: liveではsavesを更新しない（試合後に確定）
+        next.saves = previous.saves;
 
         setGoalieState((prev) => ({ ...prev, [playerId]: next }));
 
@@ -207,7 +220,10 @@ export default function LiveClient({
 
         if (error) {
             setGoalieState((prev) => ({ ...prev, [playerId]: previous }));
-            const message = "保存に失敗しました。もう一度お試しください。";
+            const message =
+                error.code === "23514"
+                    ? "SA / GA の整合性に問題があります。もう一度入力してください。"
+                    : "保存に失敗しました。もう一度お試しください。";
             setError(message);
             toast({
                 variant: "destructive",
@@ -223,7 +239,7 @@ export default function LiveClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl px-6 py-8">
+        <div className="w-full py-4">
             <div className="mb-6">
                 <div className="text-lg font-semibold tracking-tight">
                     <span className="font-display">ライブ入力</span>

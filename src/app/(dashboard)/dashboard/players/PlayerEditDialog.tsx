@@ -19,6 +19,23 @@ type PlayerEditDialogProps = {
 const POSITION_OPTIONS = ["F", "D", "G"] as const;
 type PlayerPosition = (typeof POSITION_OPTIONS)[number];
 
+function mapPlayerSaveError(error: { code?: string; message: string }) {
+    if (error.code === "23505" || /duplicate/i.test(error.message)) {
+        return "同じ背番号の現役選手がすでに登録されています。";
+    }
+
+    if (error.code === "23514") {
+        if (error.message.includes("players_number_positive_chk")) {
+            return "背番号は1以上で入力してください。";
+        }
+        if (error.message.includes("players_position_valid_chk")) {
+            return "ポジションは F / D / G から選択してください。";
+        }
+    }
+
+    return error.message;
+}
+
 export default function PlayerEditDialog({
     role,
     player,
@@ -87,6 +104,60 @@ export default function PlayerEditDialog({
 
         setIsSaving(true);
 
+        const { data: basePlayer, error: basePlayerError } = await supabase
+            .from("players")
+            .select("team_id")
+            .eq("id", player.id)
+            .maybeSingle();
+
+        if (basePlayerError || !basePlayer?.team_id) {
+            setIsSaving(false);
+            const message = "チーム情報の取得に失敗しました。";
+            setErrorMessage(message);
+            toast({
+                variant: "destructive",
+                title: "保存エラー",
+                description: message,
+            });
+            return;
+        }
+
+        if (isActive) {
+            const { data: duplicated, error: duplicateError } = await supabase
+                .from("players")
+                .select("id")
+                .eq("team_id", basePlayer.team_id)
+                .eq("number", parsedNumber)
+                .eq("is_active", true)
+                .neq("id", player.id)
+                .limit(1);
+
+            if (duplicateError) {
+                setIsSaving(false);
+                const message = "背番号の重複チェックに失敗しました。";
+                setErrorMessage(message);
+                toast({
+                    variant: "destructive",
+                    title: "保存エラー",
+                    description: message,
+                });
+                return;
+            }
+
+            if ((duplicated ?? []).length > 0) {
+                setIsSaving(false);
+                const message =
+                    "同じ背番号の現役選手がすでに登録されています。";
+                setErrorMessage(message);
+                toast({
+                    variant: "destructive",
+                    title: "入力エラー",
+                    description: message,
+                });
+                return;
+            }
+        }
+
         const { error } = await supabase
             .from("players")
             .update({
@@ -100,11 +171,12 @@ export default function PlayerEditDialog({
         setIsSaving(false);
 
         if (error) {
-            setErrorMessage(error.message);
+            const message = mapPlayerSaveError(error);
+            setErrorMessage(message);
             toast({
                 variant: "destructive",
                 title: "保存エラー",
-                description: error.message,
+                description: message,
             });
             return;
         }

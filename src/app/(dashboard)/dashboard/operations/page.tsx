@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { getMemberWithTeam } from "@/lib/supabase/queries";
+import {
+    getMemberWithTeam,
+    getOperationalAlertsByTeam,
+} from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +21,15 @@ export default async function OperationsPage() {
 
     const { data: member } = await getMemberWithTeam(supabase, user.id);
     const isStaff = member?.role === "staff";
+    const teamId = member?.team?.id ?? null;
+    const { data: operationalAlerts } = await getOperationalAlertsByTeam(
+        supabase,
+        teamId
+    );
+    const staleGames = operationalAlerts?.staleGames ?? [];
+    const staleCount = operationalAlerts?.staleCount ?? 0;
+    const goalieMismatchGames = operationalAlerts?.goalieMismatchGames ?? [];
+    const goalieMismatchCount = operationalAlerts?.goalieMismatchCount ?? 0;
 
     if (!isStaff) {
         return (
@@ -59,6 +71,69 @@ export default async function OperationsPage() {
                     <div className="rounded-xl border border-border/70 bg-white/80 p-3">
                         3. バックアップを取得（Freeプラン: 週1手動）
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card className="border border-border/60">
+                <CardHeader className="border-b border-border/60">
+                    <CardTitle className="text-base">要対応アラート</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 py-5 text-sm">
+                    <div className="rounded-xl border border-border/70 bg-white/80 p-3">
+                        未確定（2日超）:{" "}
+                        <span className="font-semibold">{staleCount}</span>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-white/80 p-3">
+                        ゴーリー整合性エラー:{" "}
+                        <span className="font-semibold">
+                            {goalieMismatchCount}
+                        </span>
+                    </div>
+
+                    {staleGames.length > 0 && (
+                        <div>
+                            <div className="mb-2 text-xs text-muted-foreground">
+                                未確定の試合
+                            </div>
+                            <div className="space-y-2">
+                                {staleGames.map((game) => (
+                                    <Link
+                                        key={game.id}
+                                        href={`/dashboard/games/${game.id}`}
+                                        className="block rounded-lg border border-border/70 bg-white px-3 py-2 text-xs hover:border-border"
+                                    >
+                                        {game.game_date} vs {game.opponent}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {goalieMismatchGames.length > 0 && (
+                        <div>
+                            <div className="mb-2 text-xs text-muted-foreground">
+                                整合性確認が必要な試合
+                            </div>
+                            <div className="space-y-2">
+                                {goalieMismatchGames.map((game) => (
+                                    <Link
+                                        key={game.id}
+                                        href={`/dashboard/games/${game.id}/edit`}
+                                        className="block rounded-lg border border-border/70 bg-white px-3 py-2 text-xs hover:border-border"
+                                    >
+                                        {game.game_date} vs {game.opponent} ・{" "}
+                                        {game.mismatch_count}件
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {staleCount === 0 && goalieMismatchCount === 0 && (
+                        <div className="text-xs text-muted-foreground">
+                            現在、緊急対応が必要な項目はありません。
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

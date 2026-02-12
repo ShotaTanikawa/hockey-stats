@@ -13,6 +13,31 @@ import type {
 // SupabaseのDBアクセスを集約して、RLS前提の読み書きを統一する
 // - 画面側はこの関数群だけを使い、クエリの書き方を分散させない
 type TeamRow = Tables<"teams">;
+type OperationalGameAlert = {
+    id: string;
+    game_date: string;
+    opponent: string;
+    workflow_status: "draft" | "in_progress" | "finalized";
+};
+
+type GoalieMismatchRow = {
+    game_id: string;
+    shots_against: number;
+    saves: number;
+    goals_against: number;
+    games: {
+        id: string;
+        game_date: string;
+        opponent: string;
+    } | null;
+};
+
+type GoalieMismatchGameAlert = {
+    id: string;
+    game_date: string;
+    opponent: string;
+    mismatch_count: number;
+};
 
 // チーム所属情報とチーム詳細をまとめて扱うための型
 type MemberWithTeam = {
@@ -85,7 +110,9 @@ export async function getGamesByTeam(
 ) {
     let query = supabase
         .from("games")
-        .select("id, game_date, opponent, venue, period_minutes, has_overtime")
+        .select(
+            "id, game_date, opponent, venue, period_minutes, has_overtime, workflow_status"
+        )
         .order("game_date", { ascending: false });
 
     if (teamId) {
@@ -282,7 +309,7 @@ export async function getGameById(
     return supabase
         .from("games")
         .select(
-            "id, team_id, season, game_date, opponent, venue, period_minutes, has_overtime"
+            "id, team_id, season, game_date, opponent, venue, period_minutes, has_overtime, workflow_status"
         )
         .eq("id", gameId)
         .maybeSingle()
@@ -402,4 +429,79 @@ export async function getMemberRoleByTeam(
         .then(
             (result) => result as { data: { role: "staff" | "viewer" } | null }
         );
+}
+
+// 実運用向けの要対応アラートを取得する
+// - stale_games: 2日以上未確定の試合
+// - goalie_mismatch_games: finalizedなのに SA != Saves + GA の試合
+export async function getOperationalAlertsByTeam(
+    supabase: SupabaseClient<Database>,
+    teamId: string | null
+) {
+    if (!teamId) {
+        return {
+            data: {
+                staleGames: [] as OperationalGameAlert[],
+                staleCount: 0,
+                goalieMismatchGames: [] as GoalieMismatchGameAlert[],
+                goalieMismatchCount: 0,
+            },
+        };
+    }
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 2);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+
+    const { data: staleGamesRaw } = await supabase
+        .from("games")
+        .select("id, game_date, opponent, workflow_status")
+        .eq("team_id", teamId)
+        .neq("workflow_status", "finalized")
+        .lte("game_date", cutoffDate)
+        .order("game_date", { ascending: true });
+
+    const staleGames = (staleGamesRaw ?? []) as OperationalGameAlert[];
+
+    const { data: goalieRowsRaw } = await supabase
+        .from("goalie_stats")
+        .select(
+            "game_id, shots_against, saves, goals_against, games!inner(id, game_date, opponent, team_id, workflow_status)"
+        )
+        .eq("games.team_id", teamId)
+        .eq("games.workflow_status", "finalized");
+
+    const goalieRows = (goalieRowsRaw ?? []) as GoalieMismatchRow[];
+    const mismatchMap = new Map<string, GoalieMismatchGameAlert>();
+
+    goalieRows.forEach((row) => {
+        if (!row.games) return;
+        if (row.shots_against === row.saves + row.goals_against) return;
+
+        const current = mismatchMap.get(row.game_id);
+        if (current) {
+            current.mismatch_count += 1;
+            return;
+        }
+
+        mismatchMap.set(row.game_id, {
+            id: row.games.id,
+            game_date: row.games.game_date,
+            opponent: row.games.opponent,
+            mismatch_count: 1,
+        });
+    });
+
+    const goalieMismatchGames = Array.from(mismatchMap.values()).sort((a, b) =>
+        a.game_date < b.game_date ? -1 : 1
+    );
+
+    return {
+        data: {
+            staleGames: staleGames.slice(0, 5),
+            staleCount: staleGames.length,
+            goalieMismatchGames: goalieMismatchGames.slice(0, 5),
+            goalieMismatchCount: goalieMismatchGames.length,
+        },
+    };
 }

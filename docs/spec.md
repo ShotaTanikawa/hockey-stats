@@ -82,7 +82,13 @@
 2. スケーター/ゴーリーをまとめて編集
 3. 保存時に全件 upsert
 
-### 5-5. 通算スタッツ
+### 5-5. 試合確定/再開封
+
+1. 試合詳細で「確定」を押すと `workflow_status = finalized`
+2. finalized の試合はライブ入力/試合後修正をロックする
+3. staff は「再開封」で `in_progress` に戻せる
+
+### 5-6. 通算スタッツ
 
 1. シーズンを選択
 2. 該当ゲームを集計し一覧表示
@@ -103,20 +109,21 @@
 - 運用サマリ（MVP）
   - 入力未開始の試合数
   - 定義: `player_stats` と `goalie_stats` がどちらも0件の試合
+  - 要対応アラート（2日超の未確定試合 / finalized後のゴーリー整合性エラー）
 - `/dashboard/audit`: 監査ログ（staffのみ）
 - `/dashboard/operations`: 運用メニュー（staffのみ）
 
 ### 6-3. 試合・選手
 
 - `/dashboard/games`: 試合一覧（検索/シーズン/日付/OT フィルタ）
-- `/dashboard/games/[gameId]`: 試合詳細
+- `/dashboard/games/[gameId]`: 試合詳細（CSV出力）
 - `/dashboard/games/[gameId]/live`: ライブ入力（staff）
 - `/dashboard/games/[gameId]/edit`: 試合後修正（staff）
 - `/dashboard/players`: 選手管理（検索/ポジション/ステータス）
 
 ### 6-4. 通算
 
-- `/dashboard/stats/players`: 通算スタッツ
+- `/dashboard/stats/players`: 通算スタッツ（CSV出力）
 - `/dashboard/stats/glossary`: 用語集
 
 ---
@@ -129,7 +136,7 @@
 - `invite_codes`（team_id, code, created_by, created_at, used_by, used_at）
 - `team_members`（team_id, user_id, role, is_active, created_at）
 - `players`（team_id, name, number, position, is_active）
-- `games`（team_id, season, game_date, opponent, venue, period_minutes, has_overtime）
+- `games`（team_id, season, game_date, opponent, venue, period_minutes, has_overtime, workflow_status）
 - `player_stats`（game_id, player_id, goals, assists, shots, blocks, pim）
 - `goalie_stats`（game_id, player_id, shots_against, saves, goals_against）
 
@@ -146,6 +153,10 @@
 - `goalie_stats` unique (game_id, player_id)
 - `players` index (team_id, number)
 - `games` index (team_id, season, game_date)
+- `games.period_minutes` check (15 or 20)
+- `player_stats` check (全項目が0以上)
+- `goalie_stats` check (`saves <= shots_against`, `goals_against <= shots_against`, `saves + goals_against <= shots_against`)
+- `players` check (`number > 0`, `position in ('F','D','G')`)
 
 ---
 
@@ -205,6 +216,16 @@
 - 入力: teamId
 - 出力: ok, inviteCode, error
 
+### 9-6. `GET /api/export/games/[gameId]`
+
+- 目的: 単一試合の詳細CSV出力（viewer/staff）
+- 出力: `text/csv`
+
+### 9-7. `GET /api/export/stats/season?season=...`
+
+- 目的: 指定シーズン通算CSV出力（viewer/staff）
+- 出力: `text/csv`
+
 ---
 
 ## 10. 権限設計（RLS 概要）
@@ -213,6 +234,7 @@
 - team_members に紐づく team_id のみアクセス可
 - staff: 自チームの CRUD
 - viewer: 自チームの read のみ
+- finalized 試合では `player_stats` / `goalie_stats` の更新を拒否
 
 ---
 
@@ -221,10 +243,11 @@
 - チーム名: 必須、50文字以内推奨
 - シーズン: `YYYY-YY` 形式
 - 選手名: 必須、50文字以内推奨
-- 背番号: 正の整数、チーム内重複チェック推奨
+- 背番号: 正の整数、チーム内の現役選手で重複不可（UIチェック）
 - 試合日: 必須、日付形式
 - ピリオド時間: 15 or 20
 - スタッツ値: 0以上の整数
+- ゴーリー整合性: `GA <= SA`, `Saves <= SA`, `Saves + GA <= SA`
 
 ---
 
@@ -240,8 +263,9 @@
 
 - 重要操作（チーム作成、参加、権限昇格）はサーバーログ出力
 - DB側で `audit_logs` を保持（誰が/いつ/どのレコードを変更したか）
-- エラーは console/error に残す
-- 将来的に Sentry など導入
+- 監査ログ画面で action/entity/date/変更キーを確認可能
+- Sentry を導入済み（ブラウザ/サーバー例外の収集）
+- ダッシュボード/運用画面に要対応アラートを表示
 
 ---
 
@@ -262,7 +286,7 @@
 
 ---
 
-## 15. 実運用に向けた追加観点（現状未対応）
+## 15. 実運用に向けた追加観点（残タスク）
 
 ここは「実運用するなら最優先で詰める箇所」。
 
@@ -278,9 +302,8 @@
 
 ### 15-2. 監視・障害対応
 
-- エラー監視（Sentry 等）
-- 主要操作の監査ログ（誰がいつ編集したか）
-- 障害時の問い合わせ導線
+- 障害時の問い合わせ導線（連絡先・一次対応フロー）
+- 閾値ベース通知（例: 連続保存失敗のSlack通知）
 
 ### 15-3. バックアップ
 
@@ -311,7 +334,6 @@
 ## 17. Future（拡張候補）
 
 - グラフ表示（得点推移、SV%推移）
-- CSV/Excel エクスポート
 - OAuthログイン
 - 複数チーム管理
 - 公式スコア/結果記録

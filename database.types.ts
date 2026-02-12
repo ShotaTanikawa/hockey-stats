@@ -26,6 +26,7 @@ export type Database = {
                     season: string;
                     team_id: string;
                     venue: string | null;
+                    workflow_status: "draft" | "in_progress" | "finalized";
                 };
                 Insert: {
                     created_at?: string;
@@ -38,6 +39,7 @@ export type Database = {
                     season: string;
                     team_id: string;
                     venue?: string | null;
+                    workflow_status?: "draft" | "in_progress" | "finalized";
                 };
                 Update: {
                     created_at?: string;
@@ -50,6 +52,7 @@ export type Database = {
                     season?: string;
                     team_id?: string;
                     venue?: string | null;
+                    workflow_status?: "draft" | "in_progress" | "finalized";
                 };
                 Relationships: [
                     {

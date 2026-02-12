@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -68,6 +69,9 @@ export default function SeasonStatsClient({
         const list = seasons.length > 0 ? seasons : [seasonLabel];
         return Array.from(new Set([seasonLabel, ...list]));
     }, [seasonLabel, seasons]);
+    const exportHref = `/api/export/stats/season?season=${encodeURIComponent(
+        seasonLabel
+    )}`;
 
     // クエリパラメータで season を切り替える
     function handleSeasonChange(nextSeason: string) {
@@ -89,6 +93,13 @@ export default function SeasonStatsClient({
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        className="h-9 rounded-lg border border-border/70"
+                        asChild
+                    >
+                        <a href={exportHref}>CSV出力</a>
+                    </Button>
                     <a
                         href="/dashboard/stats/glossary"
                         className="rounded-lg border border-border/70 bg-white/80 px-3 py-2 text-xs text-muted-foreground hover:bg-muted/40"

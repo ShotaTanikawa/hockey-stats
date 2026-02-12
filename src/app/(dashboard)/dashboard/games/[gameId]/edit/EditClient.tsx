@@ -18,6 +18,7 @@ import EditGoaliesCard from "./EditGoaliesCard";
 type Props = {
     gameId: string;
     opponent: string;
+    workflowStatus: "draft" | "in_progress" | "finalized";
     canEdit: boolean;
     skaters: Skater[];
     goalies: Goalie[];
@@ -46,9 +47,34 @@ function toNumber(value: string) {
     return Math.floor(parsed);
 }
 
+function validateGoalieState(
+    goalies: Goalie[],
+    goalieState: Record<string, GoalieStat>
+) {
+    for (const goalie of goalies) {
+        const row = goalieState[goalie.id] ?? EMPTY_GOALIE;
+        const label = `#${goalie.number} ${goalie.name}`;
+
+        if (row.goals_against > row.shots_against) {
+            return `${label}: GA は SA を超えられません。`;
+        }
+
+        if (row.saves > row.shots_against) {
+            return `${label}: Saves は SA を超えられません。`;
+        }
+
+        if (row.saves + row.goals_against > row.shots_against) {
+            return `${label}: Saves + GA は SA 以下にしてください。`;
+        }
+    }
+
+    return null;
+}
+
 export default function EditClient({
     gameId,
     opponent,
+    workflowStatus,
     canEdit,
     skaters,
     goalies,
@@ -108,10 +134,30 @@ export default function EditClient({
         setGoalieState(initialGoalieState);
     }, [initialGoalieState]);
 
+    useEffect(() => {
+        if (!canEdit || workflowStatus !== "draft") return;
+        void supabase
+            .from("games")
+            .update({ workflow_status: "in_progress" })
+            .eq("id", gameId);
+    }, [canEdit, workflowStatus, gameId, supabase]);
+
     // すべての選手分をまとめて upsert し、試合後の最終値として保存する
     async function handleSave() {
         if (!canEdit) return;
         setError(null);
+
+        const goalieValidationError = validateGoalieState(goalies, goalieState);
+        if (goalieValidationError) {
+            setError(goalieValidationError);
+            toast({
+                variant: "destructive",
+                title: "入力エラー",
+                description: goalieValidationError,
+            });
+            return;
+        }
+
         setSaving(true);
 
         // スケーター / ゴーリーそれぞれの payload を作る
@@ -148,7 +194,10 @@ export default function EditClient({
             .upsert(goaliePayload, { onConflict: "game_id,player_id" });
 
         if (goalieError) {
-            const message = "ゴーリースタッツの保存に失敗しました。";
+            const message =
+                goalieError.code === "23514"
+                    ? "ゴーリー値の整合性エラーです（SA / Saves / GA の関係を確認してください）。"
+                    : "ゴーリースタッツの保存に失敗しました。";
             setError(message);
             toast({
                 variant: "destructive",
@@ -201,7 +250,7 @@ export default function EditClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl px-6 py-8">
+        <div className="w-full py-4">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <div className="text-lg font-semibold tracking-tight">

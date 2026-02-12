@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,12 +14,13 @@ import type { GameRow } from "@/lib/types/stats";
 type Props = {
     game: GameRow;
     canEdit: boolean;
+    isLocked: boolean;
 };
 
 const PERIOD_MINUTES_OPTIONS = [15, 20] as const;
 type PeriodMinutes = (typeof PERIOD_MINUTES_OPTIONS)[number];
 
-export default function GameMetaEditDialog({ game, canEdit }: Props) {
+export default function GameMetaEditDialog({ game, canEdit, isLocked }: Props) {
     const router = useRouter();
     // クライアント側の Supabase で games を更新/削除する
     const supabase = createClient();
@@ -143,166 +145,182 @@ export default function GameMetaEditDialog({ game, canEdit }: Props) {
                 size="sm"
                 className="border border-border/70"
                 onClick={openDialog}
-                disabled={!canEdit}
+                disabled={!canEdit || isLocked}
+                title={isLocked ? "確定済みのため編集できません" : undefined}
             >
                 試合編集
             </Button>
 
             {/* 簡易モーダルで編集フォームを表示 */}
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <Card className="w-full max-w-lg rounded-2xl border border-border/70 shadow-lg">
-                        <CardHeader className="border-b border-border/70 px-6 py-4">
-                            <div className="text-sm font-semibold">
-                                試合編集
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-5 px-6 py-5">
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="edit-game-date"
-                                    className="text-sm"
-                                >
-                                    試合日
-                                </Label>
-                                <Input
-                                    id="edit-game-date"
-                                    type="date"
-                                    className="h-11 rounded-xl bg-white/80"
-                                    value={gameDate}
-                                    onChange={(event) =>
-                                        setGameDate(event.target.value)
-                                    }
-                                />
-                            </div>
+            {isOpen &&
+                typeof window !== "undefined" &&
+                createPortal(
+                    <div className="fixed inset-0 z-[90] overflow-y-auto bg-black/45 p-4 sm:p-6">
+                        <div className="mx-auto w-full max-w-lg py-6">
+                            <Card className="w-full rounded-2xl border border-border/70 shadow-xl">
+                                <CardHeader className="border-b border-border/70 px-6 py-4">
+                                    <div className="text-sm font-semibold">
+                                        試合編集
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-5 px-6 py-5">
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="edit-game-date"
+                                            className="text-sm"
+                                        >
+                                            試合日
+                                        </Label>
+                                        <Input
+                                            id="edit-game-date"
+                                            type="date"
+                                            className="h-11 rounded-xl bg-white/80"
+                                            value={gameDate}
+                                            onChange={(event) =>
+                                                setGameDate(event.target.value)
+                                            }
+                                        />
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="edit-opponent"
-                                    className="text-sm"
-                                >
-                                    対戦相手
-                                </Label>
-                                <Input
-                                    id="edit-opponent"
-                                    type="text"
-                                    className="h-11 rounded-xl bg-white/80"
-                                    value={opponent}
-                                    onChange={(event) =>
-                                        setOpponent(event.target.value)
-                                    }
-                                />
-                            </div>
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="edit-opponent"
+                                            className="text-sm"
+                                        >
+                                            対戦相手
+                                        </Label>
+                                        <Input
+                                            id="edit-opponent"
+                                            type="text"
+                                            className="h-11 rounded-xl bg-white/80"
+                                            value={opponent}
+                                            onChange={(event) =>
+                                                setOpponent(event.target.value)
+                                            }
+                                        />
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-venue" className="text-sm">
-                                    会場（任意）
-                                </Label>
-                                <Input
-                                    id="edit-venue"
-                                    type="text"
-                                    className="h-11 rounded-xl bg-white/80"
-                                    value={venue}
-                                    onChange={(event) =>
-                                        setVenue(event.target.value)
-                                    }
-                                />
-                            </div>
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="edit-venue"
+                                            className="text-sm"
+                                        >
+                                            会場（任意）
+                                        </Label>
+                                        <Input
+                                            id="edit-venue"
+                                            type="text"
+                                            className="h-11 rounded-xl bg-white/80"
+                                            value={venue}
+                                            onChange={(event) =>
+                                                setVenue(event.target.value)
+                                            }
+                                        />
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="edit-season"
-                                    className="text-sm"
-                                >
-                                    シーズン
-                                </Label>
-                                <Input
-                                    id="edit-season"
-                                    type="text"
-                                    className="h-11 rounded-xl bg-white/80"
-                                    value={season}
-                                    onChange={(event) =>
-                                        setSeason(event.target.value)
-                                    }
-                                />
-                            </div>
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="edit-season"
+                                            className="text-sm"
+                                        >
+                                            シーズン
+                                        </Label>
+                                        <Input
+                                            id="edit-season"
+                                            type="text"
+                                            className="h-11 rounded-xl bg-white/80"
+                                            value={season}
+                                            onChange={(event) =>
+                                                setSeason(event.target.value)
+                                            }
+                                        />
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="edit-period"
-                                    className="text-sm"
-                                >
-                                    ピリオド時間
-                                </Label>
-                                <select
-                                    id="edit-period"
-                                    className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
-                                    value={periodMinutes}
-                                    onChange={(event) =>
-                                        setPeriodMinutes(
-                                            Number(
-                                                event.target.value
-                                            ) as PeriodMinutes
-                                        )
-                                    }
-                                >
-                                    {PERIOD_MINUTES_OPTIONS.map((minutes) => (
-                                        <option key={minutes} value={minutes}>
-                                            {minutes} 分
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="edit-period"
+                                            className="text-sm"
+                                        >
+                                            ピリオド時間
+                                        </Label>
+                                        <select
+                                            id="edit-period"
+                                            className="h-11 w-full rounded-xl border border-border/70 bg-white/80 px-3 text-sm"
+                                            value={periodMinutes}
+                                            onChange={(event) =>
+                                                setPeriodMinutes(
+                                                    Number(
+                                                        event.target.value
+                                                    ) as PeriodMinutes
+                                                )
+                                            }
+                                        >
+                                            {PERIOD_MINUTES_OPTIONS.map(
+                                                (minutes) => (
+                                                    <option
+                                                        key={minutes}
+                                                        value={minutes}
+                                                    >
+                                                        {minutes} 分
+                                                    </option>
+                                                )
+                                            )}
+                                        </select>
+                                    </div>
 
-                            <label className="flex items-center gap-2 text-sm text-gray-600">
-                                <input
-                                    type="checkbox"
-                                    className="h-4 w-4 rounded border-gray-300"
-                                    checked={hasOvertime}
-                                    onChange={(event) =>
-                                        setHasOvertime(event.target.checked)
-                                    }
-                                />
-                                延長戦（OT/SO）あり
-                            </label>
+                                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                                        <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded border-gray-300"
+                                            checked={hasOvertime}
+                                            onChange={(event) =>
+                                                setHasOvertime(
+                                                    event.target.checked
+                                                )
+                                            }
+                                        />
+                                        延長戦（OT/SO）あり
+                                    </label>
 
-                            {errorMessage && (
-                                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-                                    {errorMessage}
-                                </div>
-                            )}
+                                    {errorMessage && (
+                                        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                                            {errorMessage}
+                                        </div>
+                                    )}
 
-                            <div className="flex flex-wrap justify-end gap-2 pt-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-9 rounded-lg border-border/70"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    キャンセル
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-9 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
-                                    onClick={handleDelete}
-                                    disabled={isSaving}
-                                >
-                                    削除
-                                </Button>
-                                <Button
-                                    type="button"
-                                    className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? "保存中..." : "保存する"}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+                                    <div className="flex flex-wrap justify-end gap-2 pt-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-9 rounded-lg border-border/70"
+                                            onClick={() => setIsOpen(false)}
+                                        >
+                                            キャンセル
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-9 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                                            onClick={handleDelete}
+                                            disabled={isSaving}
+                                        >
+                                            削除
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            className="h-9 rounded-lg border border-foreground bg-foreground px-4 text-background hover:bg-foreground/90"
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                        >
+                                            {isSaving ? "保存中..." : "保存する"}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>,
+                    document.body
+                )}
         </>
     );
 }

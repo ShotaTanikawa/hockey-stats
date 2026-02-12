@@ -52,6 +52,11 @@ export default async function GameLivePage({
         redirect("/dashboard/games");
     }
 
+    // 確定済み試合はライブ入力をロックする
+    if (game.workflow_status === "finalized") {
+        redirect(`/dashboard/games/${game.id}`);
+    }
+
     // ロール確認（staff のみライブ入力可能）
     const { data: member } = await getMemberRoleByTeam(
         supabase,
@@ -106,6 +111,7 @@ export default async function GameLivePage({
             <LiveClient
                 gameId={game.id}
                 opponent={game.opponent}
+                workflowStatus={game.workflow_status ?? "draft"}
                 canEdit={canEdit}
                 skaters={(skaters ?? []) as Skater[]}
                 goalies={(goalies ?? []) as Goalie[]}
