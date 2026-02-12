@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     const parsed = promoteSchema.safeParse(body);
 
     if (!parsed.success) {
+        console.error("[team-members/promote] invalid payload");
         return NextResponse.json(
             { error: "入力内容を確認してください。" },
             { status: 400 }
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
+        console.error("[team-members/promote] unauthenticated");
         return NextResponse.json(
             { error: "未ログインです。" },
             { status: 401 }
@@ -47,6 +49,10 @@ export async function POST(request: Request) {
         .maybeSingle();
 
     if (member?.role !== "staff") {
+        console.error("[team-members/promote] forbidden", {
+            requester: user.id,
+            teamId,
+        });
         return NextResponse.json(
             { error: "スタッフ権限が必要です。" },
             { status: 403 }
@@ -57,6 +63,7 @@ export async function POST(request: Request) {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
+        console.error("[team-members/promote] missing server config");
         return NextResponse.json(
             { error: "サーバー設定が不足しています。" },
             { status: 500 }
@@ -73,11 +80,17 @@ export async function POST(request: Request) {
         .eq("user_id", userId);
 
     if (error) {
+        console.error("[team-members/promote] update failed", {
+            teamId,
+            userId,
+            error: error.message,
+        });
         return NextResponse.json(
             { error: "権限更新に失敗しました。" },
             { status: 500 }
         );
     }
 
+    console.info("[team-members/promote] success", { teamId, userId });
     return NextResponse.json({ ok: true });
 }

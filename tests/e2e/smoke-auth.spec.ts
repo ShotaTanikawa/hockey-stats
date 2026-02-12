@@ -15,7 +15,9 @@ test.describe("Auth pages", () => {
         await expect(
             page.getByRole("heading", { name: "サインアップ" })
         ).toBeVisible();
-        await expect(page.getByRole("tab", { name: "参加（join_code）" })).toBeVisible();
+        await expect(
+            page.getByRole("tab", { name: "参加（招待コード）" })
+        ).toBeVisible();
         await expect(page.getByRole("tab", { name: "チーム作成" })).toBeVisible();
     });
 

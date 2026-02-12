@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, BarChart } from "lucide-react";
+import { Calendar, BarChart, ClipboardList, Flag, PlayCircle } from "lucide-react";
 import {
     getMemberWithTeam,
     getUnloggedGameCountByTeam,
 } from "@/lib/supabase/queries";
 import TeamMembersCard from "./TeamMembersCard";
+import GameFlowSteps from "@/components/games/GameFlowSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -139,6 +140,57 @@ export default async function DashboardPage() {
                 </CardContent>
             </Card>
 
+            {isStaff && (
+                <Card className="mb-8 border border-border/60">
+                    <CardHeader className="border-b border-border/60">
+                        <CardTitle className="text-base">今日やること</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-5 py-6">
+                        <div className="space-y-2">
+                            <div className="text-xs text-muted-foreground">
+                                試合運用フロー
+                            </div>
+                            <GameFlowSteps current="create" />
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <Link href="/dashboard/games" className="block">
+                                <div className="rounded-2xl border border-border/70 bg-white/70 p-4 transition hover:border-border hover:shadow-sm">
+                                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                                        <Flag className="h-4 w-4" />
+                                        試合を登録
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        まず新規試合を作成
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link href="/dashboard/games" className="block">
+                                <div className="rounded-2xl border border-border/70 bg-white/70 p-4 transition hover:border-border hover:shadow-sm">
+                                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                                        <PlayCircle className="h-4 w-4" />
+                                        ライブ入力
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        試合中に記録を更新
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link href="/dashboard/games" className="block">
+                                <div className="rounded-2xl border border-border/70 bg-white/70 p-4 transition hover:border-border hover:shadow-sm">
+                                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                                        <ClipboardList className="h-4 w-4" />
+                                        試合後修正
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        スコアシートで最終確認
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* よく使う画面への導線 */}
             <div className="mb-4 text-sm font-semibold">Quick Actions</div>
             <div className="space-y-4">
@@ -153,7 +205,7 @@ export default async function DashboardPage() {
                                     試合一覧
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    View and manage games
+                                    試合作成・ライブ・修正
                                 </div>
                             </div>
                             <div className="text-gray-400">→</div>
@@ -172,7 +224,7 @@ export default async function DashboardPage() {
                                     選手一覧
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    View and manage players
+                                    ロースター管理
                                 </div>
                             </div>
                             <div className="text-gray-400">→</div>
@@ -191,14 +243,63 @@ export default async function DashboardPage() {
                                     シーズン通算
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    Season statistics
+                                    シーズン集計を確認
                                 </div>
                             </div>
                             <div className="text-gray-400">→</div>
                         </CardContent>
                     </Card>
                 </Link>
+
+                {isStaff && (
+                    <Link href="/dashboard/audit" className="block">
+                        <Card className="border border-border/60 transition hover:bg-muted/40">
+                            <CardContent className="flex items-center gap-4 py-5">
+                                <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border/70 bg-white/80">
+                                    <ClipboardList />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-sm font-semibold">
+                                        監査ログ
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        変更履歴を確認
+                                    </div>
+                                </div>
+                                <div className="text-gray-400">→</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                )}
             </div>
+
+            {isStaff && (
+                <Card
+                    id="operations"
+                    className="mt-6 border border-border/60 bg-muted/20"
+                >
+                    <CardHeader className="border-b border-border/60">
+                        <CardTitle className="text-base">運用メニュー</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-3 py-5 sm:grid-cols-3">
+                        <Link href="/dashboard/audit" className="block">
+                            <div className="rounded-xl border border-border/70 bg-white/80 p-3 text-xs font-medium text-foreground transition hover:border-border">
+                                監査ログを確認
+                            </div>
+                        </Link>
+                        <Link href="/dashboard/games" className="block">
+                            <div className="rounded-xl border border-border/70 bg-white/80 p-3 text-xs font-medium text-foreground transition hover:border-border">
+                                試合の入力漏れを確認
+                            </div>
+                        </Link>
+                        <Link href="/dashboard/operations" className="block">
+                            <div className="rounded-xl border border-border/70 bg-white/80 p-3 text-xs font-medium text-foreground transition hover:border-border">
+                                週次バックアップ手順
+                            </div>
+                        </Link>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card className="mt-6 border border-dashed border-border/70 bg-muted/20">
                 <CardContent className="flex gap-2 p-4 text-xs text-muted-foreground">

@@ -96,7 +96,47 @@ export default function DashboardShell({
                                     className="block rounded-lg px-2 py-2 hover:bg-muted/60"
                                     onClick={() => setMenuOpen(false)}
                                 >
-                                    Team Info
+                                    ダッシュボード
+                                </Link>
+                                <Link
+                                    href="/dashboard/games"
+                                    className="block rounded-lg px-2 py-2 hover:bg-muted/60"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    試合一覧
+                                </Link>
+                                <Link
+                                    href="/dashboard/stats/players"
+                                    className="block rounded-lg px-2 py-2 hover:bg-muted/60"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    シーズン通算
+                                </Link>
+                                {roleLabel === "staff" && (
+                                    <Link
+                                        href="/dashboard/audit"
+                                        className="block rounded-lg px-2 py-2 hover:bg-muted/60"
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        監査ログ
+                                    </Link>
+                                )}
+                                {roleLabel === "staff" && (
+                                    <Link
+                                        href="/dashboard/operations"
+                                        className="block rounded-lg px-2 py-2 hover:bg-muted/60"
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        運用ルール
+                                    </Link>
+                                )}
+                                <div className="my-1 h-px bg-border/70" />
+                                <Link
+                                    href="/dashboard/players"
+                                    className="block rounded-lg px-2 py-2 hover:bg-muted/60"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    選手一覧
                                 </Link>
                                 <div className="my-1 h-px bg-border/70" />
                                 <button
@@ -117,7 +157,20 @@ export default function DashboardShell({
             </main>
 
             <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/80 backdrop-blur">
-                <div className="mx-auto grid w-full max-w-6xl grid-cols-3 text-center text-xs text-muted-foreground">
+                <div className="mx-auto grid w-full max-w-6xl grid-cols-4 text-center text-xs text-muted-foreground">
+                    <Link
+                        href="/dashboard"
+                        className={`py-3 ${
+                            isActive("/dashboard") &&
+                            !isActive("/dashboard/games") &&
+                            !isActive("/dashboard/players") &&
+                            !isActive("/dashboard/stats")
+                                ? "bg-foreground text-background"
+                                : "hover:bg-muted/60"
+                        }`}
+                    >
+                        Home
+                    </Link>
                     <Link
                         href="/dashboard/games"
                         className={`py-3 ${

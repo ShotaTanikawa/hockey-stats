@@ -83,12 +83,12 @@ export default function JoinSignupForm() {
 
             <div className="space-y-2">
                 <Label htmlFor="team-code" className="text-sm">
-                    Team Code
+                    招待コード
                 </Label>
                 <Input
                     id="team-code"
                     type="text"
-                    placeholder="LEAFS2025"
+                    placeholder="INVITE2025"
                     className="h-12 rounded-xl border-2"
                     value={joinCode}
                     onChange={(event) =>
@@ -96,7 +96,7 @@ export default function JoinSignupForm() {
                     }
                 />
                 <p className="text-xs text-gray-500">
-                    （チームから提供されたコード）
+                    （チームから共有された1回限りのコード）
                 </p>
             </div>
 

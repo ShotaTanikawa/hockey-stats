@@ -21,6 +21,9 @@ export default function TeamMembersCard({
     const [members, setMembers] = useState<TeamMemberSummary[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [inviteCode, setInviteCode] = useState<string | null>(null);
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 
     useEffect(() => {
         if (!canManage) return;
@@ -83,6 +86,45 @@ export default function TeamMembersCard({
         toast({ title: "スタッフ権限に昇格しました。" });
     }
 
+    async function handleCreateInvite() {
+        if (!canManage) return;
+        setInviteLoading(true);
+        setInviteMessage(null);
+        setInviteCode(null);
+
+        const response = await fetch("/api/invites/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ teamId }),
+        });
+
+        const result = (await response.json()) as {
+            ok?: boolean;
+            inviteCode?: string;
+            error?: string;
+        };
+
+        setInviteLoading(false);
+
+        if (!response.ok || !result.ok || !result.inviteCode) {
+            setInviteMessage(result.error ?? "招待コードの発行に失敗しました。");
+            return;
+        }
+
+        setInviteCode(result.inviteCode);
+        setInviteMessage("招待コードを発行しました。");
+    }
+
+    async function handleCopyInvite() {
+        if (!inviteCode) return;
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            setInviteMessage("招待コードをコピーしました。");
+        } catch {
+            setInviteMessage("コピーに失敗しました。");
+        }
+    }
+
     // viewer はカード自体を非表示
     if (!canManage) {
         return null;
@@ -91,9 +133,44 @@ export default function TeamMembersCard({
     return (
         <Card className="mb-8 border border-border/60">
             <CardHeader className="border-b border-border/60">
-                <CardTitle className="text-base">チームメンバー</CardTitle>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <CardTitle className="text-base">チームメンバー</CardTitle>
+                    <Button
+                        size="sm"
+                        className="h-8 rounded-lg border border-foreground bg-foreground px-3 text-background hover:bg-foreground/90"
+                        onClick={handleCreateInvite}
+                        disabled={inviteLoading}
+                    >
+                        {inviteLoading ? "発行中..." : "招待コードを発行"}
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent className="space-y-4 py-6">
+                {inviteMessage && (
+                    <div className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+                        {inviteMessage}
+                    </div>
+                )}
+                {inviteCode && (
+                    <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-white/70 px-4 py-3">
+                        <div className="text-xs text-muted-foreground">
+                            招待コード（1回限り）
+                        </div>
+                        <div className="font-mono text-base text-foreground">
+                            {inviteCode}
+                        </div>
+                        <div>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 rounded-lg border-2 px-3 text-xs"
+                                onClick={handleCopyInvite}
+                            >
+                                コピー
+                            </Button>
+                        </div>
+                    </div>
+                )}
                 {loading && (
                     <div className="text-xs text-muted-foreground">
                         読み込み中...

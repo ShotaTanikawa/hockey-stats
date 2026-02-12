@@ -67,7 +67,7 @@ export default function SignupPage() {
                             <CardContent className="space-y-5 p-6">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="join">
-                                        参加（join_code）
+                                        参加（招待コード）
                                     </TabsTrigger>
                                     <TabsTrigger value="create">
                                         チーム作成

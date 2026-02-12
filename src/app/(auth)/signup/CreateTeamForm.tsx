@@ -37,7 +37,7 @@ export default function CreateTeamForm() {
     // seasonLabel は初期値で当年シーズンをセットする
 
     // 初回ユーザーがチームを作成するフロー
-    // - チーム作成後に join_code を表示
+    // - チーム作成後に招待コードを表示
     // - 成功後に自動ログインを試行する
     async function handleCreateTeam(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -97,7 +97,7 @@ export default function CreateTeamForm() {
         }
     }
 
-    // 生成された join_code をクリップボードにコピー
+    // 生成された招待コードをクリップボードにコピー
     async function handleCopyJoinCode() {
         if (!createdJoinCode) return;
         try {
@@ -173,7 +173,7 @@ export default function CreateTeamForm() {
             {createdJoinCode && (
                 <div className="space-y-3 rounded-lg border-2 border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
                     <div className="text-sm font-semibold text-foreground">
-                        チームコード
+                        招待コード
                     </div>
                     <div className="font-mono text-base text-foreground">
                         {createdJoinCode}
@@ -189,7 +189,9 @@ export default function CreateTeamForm() {
                         </Button>
                         {copyMessage && <span>{copyMessage}</span>}
                     </div>
-                    <div>このコードをチームに共有してください</div>
+                    <div>
+                        このコードは1回限りです。次回以降はダッシュボードから発行してください。
+                    </div>
                 </div>
             )}
 

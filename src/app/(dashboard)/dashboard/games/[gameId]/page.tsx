@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import GameFlowSteps from "@/components/games/GameFlowSteps";
 import type {
     GoalieStatWithPlayer,
     SkaterStatWithPlayer,
@@ -85,6 +86,7 @@ export default async function GameDetailPage({
 
     const skaterRows = (skaterStats ?? []) as SkaterStatWithPlayer[];
     const goalieRows = (goalieStats ?? []) as GoalieStatWithPlayer[];
+    const hasAnyStats = skaterRows.length > 0 || goalieRows.length > 0;
 
     // チーム合計を算出（スケーター分のみ）
     const totals = skaterRows.reduce(
@@ -106,6 +108,15 @@ export default async function GameDetailPage({
             >
                 ← 試合一覧へ
             </Link>
+
+            <Card className="border border-border/60">
+                <CardContent className="space-y-3 p-5">
+                    <div className="text-xs text-muted-foreground">
+                        試合運用フロー
+                    </div>
+                    <GameFlowSteps current="review" />
+                </CardContent>
+            </Card>
 
             <Card className="border border-border/60">
                 <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -147,6 +158,46 @@ export default async function GameDetailPage({
                     )}
                 </CardContent>
             </Card>
+
+            {canEdit && (
+                <Card className="border border-border/60">
+                    <CardHeader className="border-b border-border/60">
+                        <CardTitle className="text-base">次の操作</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-sm text-muted-foreground">
+                            {hasAnyStats
+                                ? "試合後修正で最終値を確認してください。"
+                                : "まだ入力がありません。ライブ入力から開始してください。"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {!hasAnyStats && (
+                                <Button
+                                    size="sm"
+                                    className="border border-foreground bg-foreground text-background"
+                                    asChild
+                                >
+                                    <Link href={`/dashboard/games/${game.id}/live`}>
+                                        ライブ入力を開始
+                                    </Link>
+                                </Button>
+                            )}
+                            {hasAnyStats && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border border-border/70"
+                                    asChild
+                                >
+                                    <Link href={`/dashboard/games/${game.id}/edit`}>
+                                        試合後修正へ
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid gap-6">
                 <Card className="border border-border/60">

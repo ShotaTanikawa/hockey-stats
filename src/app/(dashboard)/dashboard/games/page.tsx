@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import GameFlowSteps from "@/components/games/GameFlowSteps";
 import type { GameRow } from "@/lib/types/stats";
 import {
     getGamesByTeam,
@@ -86,6 +87,30 @@ export default async function DashboardGamesPage({
     });
 
     const gameRows = (games ?? []) as GameRow[];
+    const gameIds = gameRows.map((game) => game.id);
+
+    // 試合ごとの入力状況を判定するため、スタッツ有無をまとめて取得する
+    const [skaterLoggedResult, goalieLoggedResult] =
+        gameIds.length > 0
+            ? await Promise.all([
+                  supabase
+                      .from("player_stats")
+                      .select("game_id")
+                      .in("game_id", gameIds),
+                  supabase
+                      .from("goalie_stats")
+                      .select("game_id")
+                      .in("game_id", gameIds),
+              ])
+            : [{ data: [] }, { data: [] }];
+
+    const skaterLoggedIds = new Set(
+        (skaterLoggedResult.data ?? []).map((row) => row.game_id)
+    );
+    const goalieLoggedIds = new Set(
+        (goalieLoggedResult.data ?? []).map((row) => row.game_id)
+    );
+
     const filteredGames = searchQuery
         ? gameRows.filter((game) => {
               const haystack = `${game.opponent} ${game.venue ?? ""}`.toLowerCase();
@@ -104,6 +129,15 @@ export default async function DashboardGamesPage({
             )
         )
     );
+
+    function getGameStage(gameId: string) {
+        const hasSkater = skaterLoggedIds.has(gameId);
+        const hasGoalie = goalieLoggedIds.has(gameId);
+
+        if (!hasSkater && !hasGoalie) return "未入力";
+        if (hasSkater && hasGoalie) return "入力済み";
+        return "入力中";
+    }
 
     return (
         <div className="mx-auto w-full max-w-6xl">
@@ -124,6 +158,15 @@ export default async function DashboardGamesPage({
                     />
                 )}
             </div>
+
+            <Card className="mb-6 border border-border/60">
+                <CardContent className="space-y-3 p-5">
+                    <div className="text-xs text-muted-foreground">
+                        試合運用フロー
+                    </div>
+                    <GameFlowSteps current="create" />
+                </CardContent>
+            </Card>
 
             <Card className="mb-6 border border-border/60">
                 <CardContent className="space-y-4 p-5">
@@ -223,7 +266,7 @@ export default async function DashboardGamesPage({
             </Card>
 
             {/* PC幅のみテーブル風のヘッダー行を表示 */}
-            <div className="mb-3 hidden items-center px-4 text-xs text-muted-foreground sm:grid sm:grid-cols-[120px_1fr_160px_160px_180px]">
+            <div className="mb-3 hidden items-center px-4 text-xs text-muted-foreground sm:grid sm:grid-cols-[120px_1fr_160px_160px_220px]">
                 <div>DATE</div>
                 <div>OPPONENT</div>
                 <div>VENUE</div>
@@ -247,7 +290,7 @@ export default async function DashboardGamesPage({
                         key={game.id}
                         className="border border-border/60 transition hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg"
                     >
-                        <CardContent className="flex flex-col gap-4 p-5 sm:grid sm:grid-cols-[120px_1fr_160px_160px_180px] sm:items-center">
+                        <CardContent className="flex flex-col gap-4 p-5 sm:grid sm:grid-cols-[120px_1fr_160px_160px_220px] sm:items-center">
                             <div className="text-sm text-muted-foreground">
                                 {formatGameDate(game.game_date)}
                             </div>
@@ -258,6 +301,17 @@ export default async function DashboardGamesPage({
                                 {game.venue ?? "-"}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span
+                                    className={`rounded-full border px-2 py-0.5 ${
+                                        getGameStage(game.id) === "未入力"
+                                            ? "border-amber-300 bg-amber-50 text-amber-700"
+                                            : getGameStage(game.id) === "入力中"
+                                              ? "border-blue-300 bg-blue-50 text-blue-700"
+                                              : "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                    }`}
+                                >
+                                    {getGameStage(game.id)}
+                                </span>
                                 {game.has_overtime && (
                                     <span className="rounded-full border border-border/70 bg-white/80 px-2 py-0.5 text-gray-600">
                                         OT
@@ -289,6 +343,18 @@ export default async function DashboardGamesPage({
                                             href={`/dashboard/games/${game.id}/live`}
                                         >
                                             ライブ
+                                        </Link>
+                                    </Button>
+                                )}
+                                {isStaff && getGameStage(game.id) !== "未入力" && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 rounded-lg border border-border/70 px-3"
+                                        asChild
+                                    >
+                                        <Link href={`/dashboard/games/${game.id}/edit`}>
+                                            修正
                                         </Link>
                                     </Button>
                                 )}

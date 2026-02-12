@@ -12,10 +12,13 @@ const createTeamSchema = z.object({
 
 type CreateTeamPayload = z.infer<typeof createTeamSchema>;
 
-// 人が読みやすい join_code を生成（紛らわしい文字は除外）
+// 人が読みやすい招待コードを生成（紛らわしい文字は除外）
 function generateJoinCode() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    return Array.from(
+        { length: 8 },
+        () => chars[Math.floor(Math.random() * chars.length)]
+    ).join("");
 }
 
 // 初回ユーザーがチームを作成するエンドポイント
@@ -25,6 +28,7 @@ export async function POST(request: Request) {
     const parsed = createTeamSchema.safeParse(body);
 
     if (!parsed.success) {
+        console.error("[team/create] invalid payload");
         return NextResponse.json(
             { error: "入力内容を確認してください。" },
             { status: 400 }
@@ -37,6 +41,7 @@ export async function POST(request: Request) {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
+        console.error("[team/create] missing server config");
         return NextResponse.json(
             { error: "サーバー設定が不足しています。" },
             { status: 500 }
@@ -46,14 +51,14 @@ export async function POST(request: Request) {
     // RLS を迂回できる管理クライアント
     const admin = createClient(supabaseUrl, serviceRoleKey);
 
-    // join_code は衝突がないか最大 5 回まで再生成する
+    // 招待コードは衝突がないか最大 5 回まで再生成する
     let joinCode = "";
     for (let i = 0; i < 5; i += 1) {
         const candidate = generateJoinCode();
         const { data: existing } = await admin
-            .from("teams")
+            .from("invite_codes")
             .select("id")
-            .eq("join_code", candidate)
+            .eq("code", candidate)
             .maybeSingle();
         if (!existing) {
             joinCode = candidate;
@@ -62,8 +67,9 @@ export async function POST(request: Request) {
     }
 
     if (!joinCode) {
+        console.error("[team/create] invite code generation failed");
         return NextResponse.json(
-            { error: "チームコードの生成に失敗しました。" },
+            { error: "招待コードの生成に失敗しました。" },
             { status: 500 }
         );
     }
@@ -77,6 +83,9 @@ export async function POST(request: Request) {
         });
 
     if (userError || !userData.user) {
+        console.error("[team/create] user create failed", {
+            error: userError?.message,
+        });
         return NextResponse.json(
             { error: userError?.message ?? "ユーザー作成に失敗しました。" },
             { status: 400 }
@@ -95,6 +104,10 @@ export async function POST(request: Request) {
         .maybeSingle();
 
     if (teamError || !team) {
+        console.error("[team/create] team insert failed", {
+            userId: userData.user.id,
+            error: teamError?.message,
+        });
         await admin.auth.admin.deleteUser(userData.user.id);
         return NextResponse.json(
             { error: "チーム作成に失敗しました。" },
@@ -111,6 +124,11 @@ export async function POST(request: Request) {
     });
 
     if (memberError) {
+        console.error("[team/create] member insert failed", {
+            userId: userData.user.id,
+            teamId: team.id,
+            error: memberError.message,
+        });
         // 途中失敗時は作成済みのデータをロールバック
         await admin.auth.admin.deleteUser(userData.user.id);
         await admin.from("teams").delete().eq("id", team.id);
@@ -120,5 +138,31 @@ export async function POST(request: Request) {
         );
     }
 
+    // 初回招待コードを発行
+    const { error: inviteError } = await admin.from("invite_codes").insert({
+        team_id: team.id,
+        code: joinCode,
+        created_by: userData.user.id,
+    });
+
+    if (inviteError) {
+        console.error("[team/create] invite insert failed", {
+            userId: userData.user.id,
+            teamId: team.id,
+            error: inviteError.message,
+        });
+        await admin.auth.admin.deleteUser(userData.user.id);
+        await admin.from("team_members").delete().eq("team_id", team.id);
+        await admin.from("teams").delete().eq("id", team.id);
+        return NextResponse.json(
+            { error: "招待コードの発行に失敗しました。" },
+            { status: 500 }
+        );
+    }
+
+    console.info("[team/create] success", {
+        teamId: team.id,
+        userId: userData.user.id,
+    });
     return NextResponse.json({ ok: true, joinCode });
 }

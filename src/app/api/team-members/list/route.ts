@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     });
 
     if (!parsed.success) {
+        console.error("[team-members/list] invalid payload");
         return NextResponse.json(
             { error: "入力内容を確認してください。" },
             { status: 400 }
@@ -39,7 +40,11 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        return NextResponse.json({ error: "未ログインです。" }, { status: 401 });
+        console.error("[team-members/list] unauthenticated");
+        return NextResponse.json(
+            { error: "未ログインです。" },
+            { status: 401 }
+        );
     }
 
     // staff 以外は閲覧不可
@@ -52,6 +57,10 @@ export async function GET(request: Request) {
         .maybeSingle();
 
     if (member?.role !== "staff") {
+        console.error("[team-members/list] forbidden", {
+            requester: user.id,
+            teamId,
+        });
         return NextResponse.json(
             { error: "スタッフ権限が必要です。" },
             { status: 403 }
@@ -62,6 +71,7 @@ export async function GET(request: Request) {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
+        console.error("[team-members/list] missing server config");
         return NextResponse.json(
             { error: "サーバー設定が不足しています。" },
             { status: 500 }
@@ -79,6 +89,10 @@ export async function GET(request: Request) {
         .order("created_at", { ascending: true });
 
     if (error) {
+        console.error("[team-members/list] query failed", {
+            teamId,
+            error: error.message,
+        });
         return NextResponse.json(
             { error: "メンバー取得に失敗しました。" },
             { status: 500 }
@@ -98,5 +112,9 @@ export async function GET(request: Request) {
         })
     );
 
+    console.info("[team-members/list] success", {
+        teamId,
+        count: enriched.length,
+    });
     return NextResponse.json({ members: enriched });
 }

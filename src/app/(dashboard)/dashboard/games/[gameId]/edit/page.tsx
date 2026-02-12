@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import GameFlowSteps from "@/components/games/GameFlowSteps";
 import EditClient from "./EditClient";
 import type {
     Goalie,
@@ -74,6 +76,14 @@ export default async function GameEditPage({
             >
                 ← 試合詳細へ
             </Link>
+            <Card className="border border-border/60">
+                <CardContent className="space-y-3 p-5">
+                    <div className="text-xs text-muted-foreground">
+                        試合運用フロー
+                    </div>
+                    <GameFlowSteps current="edit" />
+                </CardContent>
+            </Card>
             <EditClient
                 gameId={game.id}
                 opponent={game.opponent}
